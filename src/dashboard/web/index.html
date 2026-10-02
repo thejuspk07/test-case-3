@@ -99,6 +99,7 @@
   .rail-item span{font-size:8px;letter-spacing:.08em;font-weight:600;text-transform:uppercase}
   .rail-item:hover{color:var(--ink);background:var(--btn-hover);transform:translateY(-1px)}
   .rail-item:active{transform:scale(.97)}
+  .rail-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .rail-item.on{color:var(--accent);background:var(--accent-soft);border-color:var(--accent-line)}
   #rail .rail-spacer{flex:1}
 
@@ -250,6 +251,87 @@
   #demo-badge.on{display:flex}
   #demo-badge .db-dot{width:6px;height:6px;border-radius:50%;background:#ffb020}
   #demo-badge .db-sub{color:#e8c48a;font-weight:600;letter-spacing:.08em;text-transform:none;opacity:.9}
+
+  #operator-alert{position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:29;
+    min-width:290px;max-width:min(560px,calc(100% - 32px));padding:9px 14px;
+    background:var(--panel);border:1px solid var(--hairline);border-left:3px solid var(--warn);
+    border-radius:7px;box-shadow:var(--shadow);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    color:var(--ink);font-size:10px;line-height:1.45;letter-spacing:.04em;pointer-events:auto}
+  #operator-alert[data-severity="critical"]{border-left-color:var(--bad)}
+  #operator-alert .oa-title{font-weight:800;letter-spacing:.12em}
+  #operator-alert .oa-detail{color:var(--ink-soft);margin-left:8px}
+  .scene-focus #operator-alert{top:104px}
+
+  .settings-view{position:absolute;inset:52px 0 0 64px;z-index:32;display:grid;grid-template-columns:208px minmax(0,1fr);
+    background:var(--bg);border-top:1px solid var(--hairline);overflow:hidden;pointer-events:auto}
+  .settings-view[hidden]{display:none}
+  .settings-nav{padding:24px 16px;border-right:1px solid var(--hairline);background:var(--panel-solid)}
+  .settings-nav h2{margin:0 8px 18px;color:var(--ink-faint);font-size:9px;letter-spacing:.18em}
+  .settings-nav button{display:block;width:100%;text-align:left;border:0;border-radius:7px;background:transparent;color:var(--ink-soft);padding:9px 10px;margin:3px 0;font:inherit;font-size:11px;cursor:pointer}
+  .settings-nav button:hover,.settings-nav button.on{background:var(--accent-soft);color:var(--accent)}
+  .settings-main{padding:24px clamp(20px,4vw,56px);overflow:auto;max-width:980px;width:100%;margin:0 auto}
+  .settings-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+  .settings-top h1{font-size:18px;letter-spacing:.12em;margin:0;color:var(--ink)}
+  .settings-crumb{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:7px}
+  .settings-card{background:var(--panel);border:1px solid var(--hairline);border-radius:10px;padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+  .settings-card h3{font-size:12px;letter-spacing:.08em;margin:0 0 12px;color:var(--ink)}
+  .settings-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--hairline-soft);font-size:11px}
+  .settings-row:first-of-type{border-top:0}.settings-row .settings-label{flex:1;color:var(--lbl)}
+  .settings-input{width:min(100%,390px);padding:9px 10px;border:1px solid var(--hairline);border-radius:6px;background:var(--btn-bg);color:var(--ink);font:inherit;font-size:11px}
+  .settings-button{border:1px solid var(--accent-line);border-radius:7px;background:var(--accent-soft);color:var(--accent);padding:9px 13px;font:inherit;font-size:10px;font-weight:700;letter-spacing:.08em;cursor:pointer}
+  .settings-button.primary{background:var(--accent);color:var(--panel-solid);border-color:var(--accent)}
+  .settings-button:disabled{opacity:.5;cursor:not-allowed}
+  .settings-hint{font-size:10px;line-height:1.6;color:var(--ink-soft);max-width:640px}
+  .settings-error{font-size:10px;line-height:1.5;color:var(--bad);margin-top:10px}
+  .settings-status{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:.1em}
+  .settings-toggle{accent-color:var(--accent);width:15px;height:15px}
+  .workspace-view{position:absolute;inset:52px 0 0 64px;z-index:31;background:var(--bg);overflow:auto;pointer-events:auto;padding:28px clamp(20px,4vw,56px) 36px}
+  .workspace-inner{max-width:1240px;margin:0 auto}
+  .page-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 22px;padding-bottom:16px;border-bottom:1px solid var(--hairline)}
+  .page-eyebrow{font-size:9px;letter-spacing:.16em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:7px}
+  .page-heading h1{font-size:21px;letter-spacing:.06em;font-weight:650;color:var(--ink)}
+  .page-heading p{font-size:11px;color:var(--ink-soft);margin-top:7px;line-height:1.5}
+  .page-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}
+  .page-card{grid-column:span 6;min-width:0;padding:16px;background:var(--panel-solid);border:1px solid var(--hairline);border-radius:8px}
+  .page-card.wide{grid-column:1/-1}.page-card.third{grid-column:span 4}
+  .page-card h2{font-size:10px;letter-spacing:.13em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:13px}
+  .page-card p,.page-note{font-size:11px;line-height:1.55;color:var(--ink-soft)}
+  .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+  .metric{padding:11px;border:1px solid var(--hairline-soft);border-radius:6px;background:var(--btn-bg);min-width:0}
+  .metric .k{font-size:8px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:7px}
+  .metric .v{font:600 13px var(--mono);line-height:1.3;color:var(--val);overflow-wrap:break-word;word-break:normal}
+  .metric .u{font:500 9px var(--sans);color:var(--ink-soft)}
+  .data-table{width:100%;border-collapse:collapse;font-size:10px}
+  .data-table th{text-align:left;padding:9px 8px;color:var(--ink-faint);font-size:8px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--hairline)}
+  .data-table td{padding:10px 8px;border-bottom:1px solid var(--hairline-soft);color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .data-table tbody tr{cursor:pointer}.data-table tbody tr:hover{background:var(--accent-soft)}
+  .asset-link,.page-action{border:0;background:none;color:var(--accent);font:600 11px var(--sans);cursor:pointer}
+  .page-action{border:1px solid var(--accent-line);border-radius:6px;padding:8px 11px;background:var(--accent-soft)}
+  .page-action:hover{background:var(--btn-hover)}
+  .page-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hairline);border-radius:999px;padding:4px 8px;font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+  .page-pill.ok{color:var(--ok);border-color:var(--chip-ok-bd);background:var(--chip-ok-bg)}.page-pill.warn{color:var(--warn);border-color:var(--chip-warn-bd);background:var(--chip-warn-bg)}.page-pill.bad{color:var(--bad);border-color:var(--chip-bad-bd);background:var(--chip-bad-bg)}
+  .page-list{display:grid;gap:0}.page-list-row{display:grid;grid-template-columns:minmax(120px,1fr) minmax(160px,2fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--hairline-soft);font-size:10px}
+  .page-list-row:last-child{border-bottom:0}.page-list-row .meta{color:var(--ink-faint);font:9px var(--mono)}
+  .page-event-group{padding:0;overflow:hidden}.page-event-group>summary{list-style:none;padding:13px 16px;cursor:pointer;font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--ink-faint);text-transform:uppercase}
+  .page-event-group>summary::-webkit-details-marker{display:none}.page-event-group>summary::after{content:'+';float:right;color:var(--accent);font-size:14px;line-height:10px}.page-event-group[open]>summary::after{content:'−'}
+  .page-event-group .page-list{max-height:320px;overflow:auto;padding:0 16px 12px}
+  .simulation-strip{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.simulation-strip .metric{flex:1;min-width:130px}
+  .simulation-view{background:transparent;overflow:visible;pointer-events:none;padding:12px 16px}
+  .simulation-view .workspace-inner{max-width:none;pointer-events:none}
+  .simulation-view .page-heading{display:block;width:max-content;max-width:min(540px,calc(100vw - 100px));padding:7px 12px;margin:0;background:var(--panel);border:1px solid var(--hairline);border-radius:8px;box-shadow:var(--shadow);backdrop-filter:blur(10px)}
+  .simulation-view .page-heading>div{display:grid;grid-template-columns:max-content max-content;align-items:baseline;column-gap:12px}.simulation-view .page-eyebrow{grid-column:1/-1}.simulation-view .page-heading h1{font-size:16px}.simulation-view .page-heading p{margin:0;font-size:9px}.simulation-view .simulation-strip{max-width:980px;margin-top:7px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+  .simulation-view .simulation-strip .metric{background:var(--panel);box-shadow:var(--shadow);backdrop-filter:blur(10px)}
+  .simulation-view .simulation-strip .metric{min-width:0;padding:10px}.simulation-view .simulation-strip .metric .v{font-size:10px;overflow-wrap:normal;word-break:normal}
+  .sim-camera-controls{max-width:980px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--hairline);border-radius:7px;background:var(--panel);box-shadow:var(--shadow);backdrop-filter:blur(10px);pointer-events:auto}
+  .sim-camera-controls .k{font-size:8px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-faint);margin-right:4px}
+  .sim-camera-controls [data-camera]{pointer-events:auto}
+  .simulation-view [data-camera]{pointer-events:auto}
+  #twin-root.workspace-open #hud-right,#twin-root.workspace-open #hud-bottom,#twin-root.workspace-open #hud-hint,#twin-root.workspace-open #operator-alert,#twin-root.workspace-open #demo-badge{display:none!important}
+  #twin-root.workspace-open:not(.workspace-simulation) #hud-controls{display:none!important}
+  #twin-root.workspace-simulation #hud-controls{z-index:34}
+  .settings-row{min-height:40px}.settings-view .settings-card{max-width:860px}
+  @media(max-width:800px){.settings-view,.workspace-view{inset:52px 0 0 56px}.settings-view{grid-template-columns:142px minmax(0,1fr)}.settings-nav{padding:18px 9px}.settings-main{padding:18px 14px}.workspace-view{padding:20px 14px}.page-card.third{grid-column:span 6}.simulation-view .simulation-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:560px){#rail{width:52px}.rail-item{width:40px}.rail-item span{font-size:7px}.settings-view{grid-template-columns:112px minmax(0,1fr)}.settings-nav button{padding:8px 6px;font-size:10px}.settings-main{padding:14px 10px}.settings-row{flex-wrap:wrap;align-items:flex-start}.settings-row .settings-label{min-width:100%}.settings-input{width:100%}.page-heading{align-items:flex-start;flex-direction:column}.page-heading h1{font-size:18px}.page-grid{gap:9px}.page-card,.page-card.third{grid-column:1/-1;padding:12px}.data-table{min-width:680px}.page-card:has(.data-table){overflow:auto}}
 
   /* — controls (camera + simulation) — */
   #hud-controls{position:absolute;left:80px;right:288px;bottom:132px;z-index:25;
@@ -887,16 +969,28 @@ float vnoiseg(vec2 p){
              mix(hashg(i + vec2(0.0, 1.0)), hashg(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 void main(){
-  float a = clamp(uFlow * 2.4, 0.0, 1.0);
-  float speed = 0.5 + uFlow * 2.6;
-  float n1 = vnoiseg(vec2(vUv2.x * 5.0,  vUv2.y * 42.0 - uTime * speed * 3.0));
-  float n2 = vnoiseg(vec2(vUv2.x * 11.0 + 4.7, vUv2.y * 80.0 - uTime * speed * 5.2));
-  float streak = smoothstep(0.36, 0.74, n1 * 0.6 + n2 * 0.4);
-  float edge = smoothstep(0.0, 0.09, vUv2.x) * (1.0 - smoothstep(0.91, 1.0, vUv2.x));
-  float ends = smoothstep(0.0, 0.05, vUv2.y) * (1.0 - smoothstep(0.88, 1.0, vUv2.y));
-  vec3 base = mix(vec3(0.05, 0.16, 0.17), vec3(0.62, 0.72, 0.76), uWhite);
-  vec3 col = mix(base, vec3(0.95, 0.98, 1.0), streak * (0.3 + 0.5 * a));
-  float alpha = (0.62 + streak * 0.45) * edge * ends * a;
+  // A square-root display curve keeps low positive releases legible while
+  // preserving a monotonic strength difference; zero remains fully hidden.
+  float a = sqrt(clamp(uFlow, 0.0, 1.0));
+  float speed = 0.45 + uFlow * 1.35;
+  // A continuous, softly bounded water surface keeps the channel readable;
+  // broad crest bands translate toward increasing v (the downstream end).
+  float wave = sin((vUv2.y * 13.0 - uTime * speed * 0.35) * 6.2831853);
+  float crest = smoothstep(-0.15, 0.92, wave);
+  float fine = sin(vUv2.y * 95.0 - uTime * speed * 3.2 + vUv2.x * 3.0) * 0.5 + 0.5;
+  // Sparse foam glints translate along the same downstream UV axis; they make
+  // direction legible at overview scale without adding per-frame scene objects.
+  float markerPhase = fract(vUv2.y * 4.0 - uTime * speed * 0.22);
+  float marker = 1.0 - smoothstep(0.0, 0.05, abs(markerPhase - 0.5));
+  float edge = smoothstep(0.0, 0.055, vUv2.x) * (1.0 - smoothstep(0.945, 1.0, vUv2.x));
+  // Keep the ribbon visible through its geometric endpoint: the end is placed
+  // within the receiving basin so the animated current reads as an inlet.
+  float ends = smoothstep(0.0, 0.035, vUv2.y) * (1.0 - smoothstep(0.965, 1.0, vUv2.y));
+  vec3 base = mix(vec3(0.025, 0.15, 0.18), vec3(0.18, 0.39, 0.43), uWhite);
+  float center = smoothstep(0.08, 0.38, vUv2.x) * (1.0 - smoothstep(0.62, 0.92, vUv2.x));
+  float highlight = clamp(0.08 + center * (crest * 0.16 + fine * 0.06 * a + marker * 0.34 * a), 0.0, 0.58);
+  vec3 col = mix(base, vec3(0.68, 0.84, 0.87), highlight);
+  float alpha = (0.78 + crest * 0.06) * edge * ends * a;
   if (alpha < 0.01) discard;
   float dist = length(cameraPosition - vWorldPos);
   float fogF = 1.0 - exp(-pow(dist * uFogDensity, 2.0));
@@ -949,6 +1043,40 @@ function waypointRibbon(waypoints, width) {
     }
   }
   return ribbonGeometry(pts, width);
+}
+/* A link is a world-space hydraulic path from the dam plunge to the next
+   basin. Follow the valley centerline, then project every sample onto the
+   existing terrain so the water ribbon stays seated in the carved channel. */
+function hydraulicLinkRibbon(upstream, downstream, terminal = false) {
+  const startZ = upstream.D.zd + 22; // overlaps the existing outlet plunge
+  const start = new THREE.Vector3(upstream.D.xc, 0, startZ);
+  // Continue to the existing basin center: its upstream terrain edge can be
+  // dry at ordinary reported levels, which made a shorter link look detached.
+  const endZ = terminal ? 590 : downstream.B.cz + 15;
+  const endX = valleyCenterX(endZ);
+  const end = new THREE.Vector3(endX, 0, endZ);
+  const points = [start];
+  const step = 38;
+  for (let z = startZ + step; z < endZ; z += step) {
+    points.push(new THREE.Vector3(valleyCenterX(z), 0, z));
+  }
+  points.push(end);
+  const path = new THREE.CatmullRomCurve3(points, false, 'centripetal');
+  const length = Math.max(1, path.getLength());
+  const samples = Math.max(12, Math.ceil(length / 3.5));
+  const surface = [];
+  for (let i = 0; i <= samples; i++) {
+    const p = path.getPointAt(i / samples);
+    // Sit above the carved channel bed so the terrain mesh cannot flicker or
+    // clip the moving surface between sampled ribbon vertices.
+    p.y = terrainHeight(p.x, p.z) + 6.2;
+    surface.push(p);
+  }
+  const geo = ribbonGeometry(surface, terminal ? 16 : 19);
+  // Blend the final 30 world units to the receiving basin's live surface so
+  // the channel visibly merges into the pool instead of disappearing below it.
+  geo.userData.inletBlendStart = terminal ? null : Math.max(0, 1 - 30 / length);
+  return geo;
 }
 /* organic blob jitter — position-based, so duplicated vertices stay welded */
 function jitterGeometry(geo, amp, yScale, yLift, seed) {
@@ -1078,9 +1206,10 @@ class ReservoirTwinRenderer {
 
     this._onResize = () => {
       const focus = this.container.classList.contains('scene-focus');
+      const twinWide = focus || this.container.classList.contains('workspace-simulation');
       const drawer = this.container.classList.contains('reservoir-view');
-      const right = focus ? 16 : drawer ? 328 : parseFloat(getComputedStyle(this.container).getPropertyValue('--status-width')) + 24;
-      const bottom = focus || drawer ? Math.max(72, (this.barRoot?.offsetHeight || 48) + 24) : (this.barRoot ? this.container.clientHeight - this.barRoot.offsetTop + 8 : 300);
+      const right = twinWide ? 16 : drawer ? 328 : parseFloat(getComputedStyle(this.container).getPropertyValue('--status-width')) + 24;
+      const bottom = twinWide || drawer ? Math.max(72, (this.barRoot?.offsetHeight || 48) + 24) : (this.barRoot ? this.container.clientHeight - this.barRoot.offsetTop + 8 : 300);
       const left = focus ? 16 : 76, top = 110;
       const w = Math.max(300, this.container.clientWidth - left - right);
       const h = Math.max(200, this.container.clientHeight - top - bottom);
@@ -1132,6 +1261,19 @@ class ReservoirTwinRenderer {
     const signature = JSON.stringify(state);
     if (signature === this._stateSignature) return;
     this._stateSignature = signature;
+    if (this._settingsView && !this._settingsView.hidden && state.notification) {
+      const note = state.notification, last = note.last_notification || {};
+      const test = note.test_email;
+      const status = this._settingsView.querySelector('[data-last-notification-status]');
+      const stamp = this._settingsView.querySelector('[data-last-notification-time]');
+      if (status) status.textContent = last.status || 'NOT_CONFIGURED';
+      if (stamp) stamp.textContent = last.timestamp || '—';
+      const send = this._settingsView.querySelector('[data-send-test]');
+      const input = this._settingsView.querySelector('[data-alert-recipient]');
+      if (send && input) send.disabled = !!note.test_pending || !input.value.includes('@') || input.value.trim() !== this._settingsSavedRecipient;
+      const result = this._settingsView.querySelector('[data-test-result]');
+      if (result && test) result.textContent = test.status === 'PENDING' ? 'Test email PENDING…' : `Test email ${test.status}${test.error ? ': ' + test.error : ''}`;
+    }
     this.renderer.shadowMap.needsUpdate = true;
     const rs = state.reservoirs || {};
     for (let i = 0; i < this.R.length; i++) {
@@ -1187,6 +1329,8 @@ class ReservoirTwinRenderer {
     this.data.autoControl = state.auto_control || null;
     this.data.forecastSourceSelection = state.forecast_source_selection || null;
     this.data.eventLog = Array.isArray(state.event_log) ? state.event_log : null;
+    this.data.notification = state.notification || null;
+    this.data.rawState = state;
     /* Stage 11 — the backend's mass-balance audit of the last authoritative
      * step (display only; nothing about it is computed in JavaScript). */
     this.data.massBalance = state.mass_balance || null;
@@ -1241,12 +1385,21 @@ class ReservoirTwinRenderer {
     for (const fm of this.flowMeshes) {
       const src = rs['reservoir_' + fm.key.slice(-1)] || {};
       const inflow = fm.key.startsWith('in');
-      const value = fm.key === 'ch4' ? down?.flow_m3_s : inflow ? src.inflow : src.release;
-      fm.mesh.visible = typeof value === 'number' && value > 0;
-      fm.mat.uniforms.uFlow.value = 0;
-      if (typeof value === 'number' && Number.isFinite(value)) {
-        fm.mat.uniforms.uFlow.value = clamp01(value / (inflow ? 120 : 70));
-      }
+      // River links show only the directed, controlled release. Spill has its
+      // own authoritative ribbon at the dam and must not be folded into this.
+      const value = inflow ? src.inflow : src.controlled_release;
+      fm.flowTarget = typeof value === 'number' && Number.isFinite(value) && value > 0
+        ? clamp01(value / (inflow ? 120 : 70)) : 0;
+      fm.mesh.visible = typeof value === 'number' && Number.isFinite(value) && value > 0;
+    }
+    if (this._renderWorkspacePage && this._workspaceView && !this._workspaceView.hidden
+      && !this._workspaceInteracting && !this._workspaceView.contains(document.activeElement) && !this._workspaceRefreshScheduled) {
+      this._workspaceRefreshScheduled = true;
+      setTimeout(() => {
+        this._workspaceRefreshScheduled = false;
+        if (!this._disposed && this._workspaceView && !this._workspaceView.hidden
+          && !this._workspaceInteracting && !this._workspaceView.contains(document.activeElement)) this._renderWorkspacePage();
+      }, 500);
     }
   }
 
@@ -1941,7 +2094,7 @@ class ReservoirTwinRenderer {
 
       /* spillway jet (flow-driven) + plunge spray */
       const jTop = new THREE.Vector3(D.xc, sill + 1, D.zd + 4);
-      const jBot = new THREE.Vector3(D.xc, terrainHeight(D.xc, D.zd + 22) + 1.2, D.zd + 22);
+      const jBot = new THREE.Vector3(D.xc, terrainHeight(D.xc, D.zd + 22) + 6.2, D.zd + 22);
       const jCtrl = new THREE.Vector3(D.xc, sill + 5, D.zd + 11);
       r.jetMat = new THREE.ShaderMaterial({
         vertexShader: FLOW_VERT, fragmentShader: FLOW_FRAG, transparent: true,
@@ -2051,17 +2204,22 @@ class ReservoirTwinRenderer {
       const mat = flowMat(white);
       const mesh = new THREE.Mesh(geo, mat);
       mesh.name = name;
-      mesh.renderOrder = 1;
+      const inletBlendStart = geo.userData.inletBlendStart;
+      const hasReceiver = typeof inletBlendStart === 'number';
+      mesh.renderOrder = hasReceiver ? 3 : 1;
       this.scene.add(mesh);
-      this.flowMeshes.push({ mat, key, mesh });
+      const receiver = hasReceiver ? this.R[Number(key.slice(-1))] : null;
+      this.flowMeshes.push({ mat, key, mesh, flowCur: 0, flowTarget: 0,
+        receiver, inletBlendStart,
+        basePositions: receiver ? geo.attributes.position.array.slice() : null });
     };
-    // A → B → C → D → downstream. Geometry is schematic, not routing physics.
+    // A → B → C → D → downstream. Visual paths only; backend flow remains authoritative.
     this.R.forEach((r, i) => {
       const next = this.R[i + 1];
-      const end = next ? next.B.cz - next.B.up + 20 : 590;
-      addFlow(terrainRibbon(r.D.zd + 20, end, 4, 20),
-        'CHANNEL_0' + (i + 1), 0.45, 'ch' + (i + 1));
-      const z = (r.D.zd + 20 + end) / 2, x = valleyCenterX(z);
+      addFlow(hydraulicLinkRibbon(r, next, !next),
+        'CHANNEL_0' + (i + 1), 0.18, 'ch' + (i + 1));
+      const z = (r.D.zd + 22 + (next ? next.B.cz + 15 : 590)) / 2;
+      const x = valleyCenterX(z);
       const arrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1),
         new THREE.Vector3(x, terrainHeight(x,z) + 9, z - 9), 22, 0xe9c86b, 9, 6);
       arrow.name = 'TOPOLOGY_DIRECTION_0' + (i + 1);
@@ -2168,7 +2326,21 @@ class ReservoirTwinRenderer {
       r.waterY = y;
     }
     for (const fm of this.flowMeshes) {
+      if (fm.receiver) {
+        const position = fm.mesh.geometry.attributes.position;
+        const uv = fm.mesh.geometry.attributes.uv;
+        const base = fm.basePositions;
+        const start = fm.inletBlendStart;
+        for (let i = 0; i < position.count; i++) {
+          const blend = smooth01(clamp01((uv.getY(i) - start) / (1 - start)));
+          const yIndex = i * 3 + 1;
+          position.array[yIndex] = lerp(base[yIndex], fm.receiver.waterY + 0.28, blend);
+        }
+        position.needsUpdate = true;
+      }
       fm.mat.uniforms.uTime.value = this._time;
+      fm.flowCur += (fm.flowTarget - fm.flowCur) * (1 - Math.exp(-dt * 3));
+      fm.mat.uniforms.uFlow.value = fm.flowCur;
     }
   }
 
@@ -2298,6 +2470,77 @@ class ReservoirTwinRenderer {
         </button>
       </div>`;
     hud.appendChild(header);
+
+    const workspaceView = document.createElement('section');
+    workspaceView.className = 'workspace-view';
+    workspaceView.hidden = true;
+    workspaceView.setAttribute('aria-live', 'polite');
+    hud.appendChild(workspaceView);
+    this._workspaceView = workspaceView;
+    this._workspacePage = 'reservoirs';
+    this._selectedReservoir = null;
+
+    const settingsView = document.createElement('section');
+    settingsView.className = 'settings-view';
+    settingsView.hidden = true;
+    settingsView.setAttribute('aria-label', 'AquaFlow settings');
+    settingsView.innerHTML = `
+      <nav class="settings-nav" aria-label="Settings sections"><h2>SETTINGS</h2>
+        <button data-settings-section="general">General</button>
+        <button data-settings-section="simulation">Simulation</button>
+        <button data-settings-section="notifications" class="on">Notifications</button>
+      </nav>
+      <main class="settings-main"><div class="settings-top"><div><h1>SETTINGS</h1><div class="settings-crumb" data-settings-crumb>Notifications / Gmail Alerts</div></div>
+        <button class="settings-button" data-settings-close aria-label="Back to dashboard">← BACK</button></div>
+        <section data-settings-page="notifications">
+          <div class="settings-card"><h3>GMAIL ALERTS</h3>
+            <div class="settings-row"><span class="settings-label">Gmail connection</span><span class="settings-status" data-gmail-status>● NOT CONNECTED</span></div>
+            <div class="settings-row" data-gmail-account-row hidden><span class="settings-label">Google account / email</span><strong data-gmail-account>—</strong></div>
+            <div class="settings-row"><button class="settings-button primary" data-gmail-connect>Connect Gmail</button>
+              <button class="settings-button" data-gmail-disconnect hidden>DISCONNECT</button></div>
+            <div class="settings-error" data-gmail-config-error hidden></div>
+            <p class="settings-hint">Connect through Google OAuth. AquaFlow never asks for your Google password. If OAuth is unavailable, configured Gmail SMTP can continue as the delivery fallback.</p>
+          </div>
+          <div class="settings-card"><h3>DOWNSTREAM ALERTS</h3>
+            <div class="settings-row"><label class="settings-label" for="alert-recipient">Alert recipient email</label><input class="settings-input" id="alert-recipient" type="email" autocomplete="email" placeholder="operator@example.com" data-alert-recipient></div>
+            <div class="settings-row"><span class="settings-label">Downstream HIGH alert</span><input class="settings-toggle" type="checkbox" data-high-enabled aria-label="Downstream HIGH alert"></div>
+            <div class="settings-row"><span class="settings-label">Downstream CRITICAL alert</span><input class="settings-toggle" type="checkbox" data-critical-enabled aria-label="Downstream CRITICAL alert"></div>
+            <div class="settings-row"><span class="settings-label">Incident delivery</span><strong>ONE EMAIL PER INCIDENT</strong></div>
+            <button class="settings-button" data-save-notification-settings>SAVE ALERT SETTINGS</button>
+            <span class="settings-hint" data-settings-save-result aria-live="polite"></span>
+          </div>
+          <div class="settings-card"><h3>DELIVERY STATUS</h3>
+            <div class="settings-row"><span class="settings-label">Last notification status</span><strong data-last-notification-status>NOT_CONFIGURED</strong></div>
+            <div class="settings-row"><span class="settings-label">Last notification timestamp</span><strong data-last-notification-time>—</strong></div>
+            <button class="settings-button primary" data-send-test> SEND TEST EMAIL </button>
+            <span class="settings-hint" data-test-result aria-live="polite"></span>
+            <p class="settings-hint" style="margin-top:8px">Test messages go only to the saved recipient. The action stays disabled until a valid recipient is configured.</p>
+          </div>
+        </section>
+        <section data-settings-page="general" hidden><div class="settings-card"><h3>GENERAL</h3><p class="settings-hint">AquaFlow operator settings. Regional and display preferences are unchanged.</p></div><div class="settings-card"><h3>GPU DIAGNOSTICS</h3><div class="settings-row"><span class="settings-label">GPU</span><strong data-gpu-name>Detecting…</strong></div><div class="settings-row"><span class="settings-label">WebGL version</span><strong data-gpu-api>—</strong></div><div class="settings-row"><span class="settings-label">Renderer</span><strong data-gpu-renderer>—</strong></div><div class="settings-row"><span class="settings-label">Vendor</span><strong data-gpu-vendor>—</strong></div><div class="settings-row"><span class="settings-label">Mode</span><strong>HIGH PERFORMANCE REQUESTED</strong></div><p class="settings-hint">Browser and operating system GPU preferences determine the physical adapter. AquaFlow requests the high-performance adapter and reports the WebGL information the browser exposes.</p></div></section>
+        <section data-settings-page="simulation" hidden><div class="settings-card"><h3>SIMULATION</h3><p class="settings-hint">Simulation controls remain available on the dashboard while this settings view is open.</p></div></section>
+      </main>`;
+    const readGpuDiagnostics = () => {
+      const gl = this.renderer && this.renderer.getContext();
+      if (!gl) return { gpu: 'Unavailable', api: 'Unavailable', renderer: 'Unavailable', vendor: 'Unavailable' };
+      let renderer = 'Not exposed', vendor = 'Not exposed';
+      try {
+        const ext = gl.getExtension('WEBGL_debug_renderer_info');
+        if (ext) { renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || renderer; vendor = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) || vendor; }
+      } catch (_) { /* Privacy settings may block unmasked WebGL information. */ }
+      const gpu = /nvidia/i.test(renderer) ? renderer : /intel/i.test(renderer) ? renderer : renderer;
+      return { gpu, api: gl.getParameter(gl.VERSION) || 'Unknown', renderer, vendor };
+    };
+    window.aquaFlowGpuDiagnostics = readGpuDiagnostics;
+    const paintGpuDiagnostics = () => {
+      const info = readGpuDiagnostics();
+      for (const [key, value] of Object.entries(info)) {
+        const node = settingsView.querySelector(`[data-gpu-${key === 'gpu' ? 'name' : key}]`);
+        if (node) node.textContent = value;
+      }
+    };
+    paintGpuDiagnostics();
+    hud.appendChild(settingsView);
 
     /* — RIGHT control panel — */
     const right = document.createElement('aside');
@@ -2558,6 +2801,21 @@ class ReservoirTwinRenderer {
       '<span class="db-sub" data-ref="dbsub"></span>';
     hud.appendChild(demoBadge);
 
+    const operatorAlert = document.createElement('div');
+    operatorAlert.id = 'operator-alert';
+    operatorAlert.hidden = true;
+    operatorAlert.setAttribute('role', 'status');
+    operatorAlert.setAttribute('aria-live', 'polite');
+    hud.appendChild(operatorAlert);
+    const notificationDetail = document.createElement('div');
+    notificationDetail.id = 'downstream-notification-detail';
+    notificationDetail.hidden = true;
+    notificationDetail.style.cssText = 'position:absolute;top:140px;left:50%;transform:translateX(-50%);z-index:30;white-space:pre-line;max-width:min(460px,calc(100% - 32px));padding:12px;background:var(--panel);border:1px solid var(--hairline);border-radius:8px;color:var(--ink);font-size:10px;line-height:1.6;pointer-events:auto';
+    hud.appendChild(notificationDetail);
+    operatorAlert.style.cursor = 'pointer';
+    operatorAlert.title = 'Select to view downstream incident details';
+    operatorAlert.addEventListener('click', () => { notificationDetail.hidden = !notificationDetail.hidden; });
+
     this.container.appendChild(hud);
     this.container.appendChild(bar);
     this.hudRoot = hud;
@@ -2593,6 +2851,8 @@ class ReservoirTwinRenderer {
       gnnstat: q(hud, '[data-ref="gnnstat"]'), gnngraph: q(hud, '[data-ref="gnngraph"]'),
       gnnrel: q(hud, '[data-ref="gnnrel"]'),
       demoBadge: q(hud, '#demo-badge'), demoBadgeSub: q(hud, '#demo-badge [data-ref="dbsub"]'),
+      operatorAlert: q(hud, '#operator-alert'),
+      notificationDetail: q(hud, '#downstream-notification-detail'),
       /* STAGE 18 — AUTO CONTROL panel + control-bar mode/source/lock refs.
        * All are display targets: the values/classes written into them come from
        * the authoritative payload, never from a local decision. */
@@ -2706,6 +2966,7 @@ class ReservoirTwinRenderer {
     focusButton.addEventListener('click', () => setFocus(!this.container.classList.contains('scene-focus')));
     this.container.addEventListener('keydown', event => {
       if (event.key === 'Escape') {
+        if (!settingsView.hidden) closeSettings();
         if (!drawer.hidden) drawer.querySelector('[data-close]').click();
         if (this.container.classList.contains('scene-focus')) { setFocus(false); focusButton.focus(); }
       }
@@ -2715,17 +2976,205 @@ class ReservoirTwinRenderer {
     secondary.innerHTML = '<summary>System, weather &amp; hardware details</summary>';
     Array.from(right.children).filter(p => !['hud-auto', 'hud-ds'].includes(p.id)).forEach(p => secondary.appendChild(p));
     right.appendChild(secondary);
-    /* Nav rail: visual state + camera shortcuts (single-page twin) */
-    rail.querySelectorAll('.rail-item').forEach(item => item.addEventListener('click', () => {
-      rail.querySelectorAll('.rail-item').forEach(b => b.classList.remove('on'));
-      item.classList.add('on');
-      if (item.dataset.nav === 'reservoirs') showReservoir(0);
-      else closeDrawer();
-      const cam = { home: 'overview', reservoirs: null, forecasting: null, simulation: 'overview', risk: null, reports: null, settings: null }[item.dataset.nav];
-      if (cam) {
-        this.el.camBtns.forEach(b => b.classList.toggle('on', b.dataset.cam === cam));
-        this.setCameraPreset(cam);
+    let savedNotificationRecipient = '';
+    const setting = selector => settingsView.querySelector(selector);
+    this._settingsView = settingsView;
+    this._settingsSavedRecipient = '';
+    const loadNotificationSettings = async () => {
+      try {
+        const response = await fetch('/api/notifications/settings', {cache:'no-store'});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Unable to load notification settings');
+        const gmail = data.gmail || {};
+        this._gmailSettingsSnapshot = {connected:!!gmail.connected,recipient:data.recipient || '',high_enabled:data.high_enabled === true,critical_enabled:data.critical_enabled === true};
+        if (this._workspacePage === 'risk' && this._renderWorkspacePage) this._renderWorkspacePage();
+        setting('[data-gmail-status]').textContent = gmail.connected ? '● CONNECTED' : gmail.auth_error ? '● AUTHENTICATION ERROR' : '● NOT CONNECTED';
+        setting('[data-gmail-account-row]').hidden = !gmail.email;
+        setting('[data-gmail-account]').textContent = gmail.email || '—';
+        setting('[data-gmail-connect]').hidden = !!gmail.connected;
+        setting('[data-gmail-connect]').textContent = gmail.auth_error ? 'RECONNECT GMAIL' : 'CONNECT GMAIL';
+        setting('[data-gmail-disconnect]').hidden = !gmail.connected;
+        setting('[data-gmail-config-error]').hidden = !!gmail.oauth_configured && !gmail.auth_error;
+        setting('[data-gmail-config-error]').textContent = gmail.auth_error ? 'Google authorization needs to be completed again.' : gmail.oauth_configured ? '' : (data.configuration_error || 'Google OAuth is not configured. Administrator OAuth credentials are required.');
+        setting('[data-alert-recipient]').value = data.recipient || '';
+        savedNotificationRecipient = data.recipient || '';
+        this._settingsSavedRecipient = savedNotificationRecipient;
+        setting('[data-high-enabled]').checked = data.high_enabled !== false;
+        setting('[data-critical-enabled]').checked = data.critical_enabled !== false;
+        setting('[data-last-notification-status]').textContent = data.last_notification_status || 'NOT_CONFIGURED';
+        setting('[data-last-notification-time]').textContent = data.last_notification_timestamp || '—';
+        const send = setting('[data-send-test]');
+        send.disabled = !gmail.connected || !!data.test_pending || !String(data.recipient || '').includes('@');
+        setting('[data-test-result]').textContent = data.test_pending ? 'Test email PENDING…' : '';
+        if (!data.test_pending && data.last_notification_kind === 'TEST' && data.last_notification_status) {
+          setting('[data-test-result]').textContent = `Test email ${data.last_notification_status}${data.last_notification_error ? ': ' + data.last_notification_error : ''}`;
+        }
+      } catch (error) {
+        setting('[data-gmail-status]').textContent = '● NOT CONNECTED';
+        setting('[data-gmail-config-error]').hidden = false;
+        setting('[data-gmail-config-error]').textContent = error.message;
       }
+    };
+    const closeSettings = () => {
+      settingsView.hidden = true;
+      workspaceView.hidden = true;
+      this.container.classList.remove('workspace-open','workspace-simulation');
+      if(this._onResize) this._onResize();
+      rail.querySelectorAll('.rail-item').forEach(b => {b.classList.toggle('on', b.dataset.nav === 'home');b.setAttribute('aria-current',b.dataset.nav==='home'?'page':'false')});
+    };
+    const openSettings = (section='notifications') => {
+      closeDrawer();
+      this.container.classList.add('workspace-open'); this.container.classList.remove('workspace-simulation');
+      if(this._onResize) this._onResize();
+      workspaceView.hidden = true;
+      settingsView.hidden = false;
+      rail.querySelectorAll('.rail-item').forEach(b => {b.classList.toggle('on', b.dataset.nav === 'settings');b.setAttribute('aria-current',b.dataset.nav==='settings'?'page':'false')});
+      selectSettingsSection(section);
+      loadNotificationSettings();
+    };
+    const selectSettingsSection = section => {
+      settingsView.querySelectorAll('[data-settings-section]').forEach(b => b.classList.toggle('on', b.dataset.settingsSection === section));
+      settingsView.querySelectorAll('[data-settings-page]').forEach(p => p.hidden = p.dataset.settingsPage !== section);
+      setting('[data-settings-crumb]').textContent = section === 'notifications' ? 'Notifications / Gmail Alerts' : section;
+    };
+    settingsView.querySelectorAll('[data-settings-section]').forEach(button => button.addEventListener('click', () => selectSettingsSection(button.dataset.settingsSection)));
+    setting('[data-settings-close]').addEventListener('click', closeSettings);
+    setting('[data-gmail-connect]').addEventListener('click', async () => {
+      const button = setting('[data-gmail-connect]'); button.disabled = true;
+      setting('[data-gmail-status]').textContent = '● CONNECTING...';
+      setting('[data-gmail-config-error]').hidden = false;
+      setting('[data-gmail-config-error]').textContent = 'Connecting to Google…';
+      try {
+        const response = await fetch('/api/notifications/gmail/connect', {method:'POST'});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Google OAuth could not be started');
+        window.location.assign(data.authorization_url);
+      } catch (error) {
+        setting('[data-gmail-status]').textContent = '● NOT CONNECTED';
+        setting('[data-gmail-config-error]').hidden = false;
+        setting('[data-gmail-config-error]').textContent = error.message;
+      } finally { button.disabled = false; }
+    });
+    setting('[data-gmail-disconnect]').addEventListener('click', async () => {
+      await fetch('/api/notifications/gmail/disconnect', {method:'POST'});
+      await loadNotificationSettings();
+    });
+    setting('[data-save-notification-settings]').addEventListener('click', async () => {
+      const result = setting('[data-settings-save-result]'); result.textContent = 'Saving…';
+      const response = await fetch('/api/notifications/settings', {method:'PUT',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({recipient:setting('[data-alert-recipient]').value,high_enabled:setting('[data-high-enabled]').checked,critical_enabled:setting('[data-critical-enabled]').checked})});
+      const data = await response.json();
+      result.textContent = response.ok ? 'Settings saved.' : (data.detail || 'Settings could not be saved.');
+      if (response.ok) await loadNotificationSettings();
+    });
+    setting('[data-send-test]').addEventListener('click', async () => {
+      const button = setting('[data-send-test]'), message = setting('[data-test-result]');
+      button.disabled = true; message.textContent = 'Test email PENDING…';
+      try {
+        const response = await fetch('/api/notifications/test', {method:'POST'});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Test email failed to start');
+        message.textContent = `Test email ${data.status}`;
+        if (data.status === 'PENDING') {
+          const pollCompletion = async remaining => {
+            if (!remaining || settingsView.hidden) return;
+            await new Promise(resolve => setTimeout(resolve, 700));
+            await loadNotificationSettings();
+            if (setting('[data-test-result]').textContent.includes('PENDING')) pollCompletion(remaining - 1);
+          };
+          pollCompletion(40);
+        }
+      } catch (error) { message.textContent = error.message; }
+      await loadNotificationSettings();
+    });
+    const esc = value => String(value == null || value === '' ? '—' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const val = (value, digits=1) => typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString(undefined,{maximumFractionDigits:digits}) : '—';
+    const pill = value => {
+      const text = String(value || 'Not available'), key = text.toUpperCase();
+      const tone = /CRITICAL|HIGH RISK|FAILED|ERROR|BLOCKED/.test(key) ? 'bad' : /WATCH|PENDING|NOT_CONFIGURED|STALE|NOT ELIGIBLE/.test(key) ? 'warn' : /NORMAL|SAFE|SENT|CONNECTED|ELIGIBLE/.test(key) ? 'ok' : '';
+      return `<span class="page-pill ${tone}">${esc(text)}</span>`;
+    };
+    const metric = (label, value, unit='') => `<div class="metric"><div class="k">${esc(label)}</div><div class="v">${esc(value)}${unit ? ` <span class="u">${esc(unit)}</span>` : ''}</div></div>`;
+    const heading = (eyebrow,title,subtitle,action='') => `<header class="page-heading"><div><div class="page-eyebrow">${esc(eyebrow)}</div><h1>${esc(title)}</h1><p>${esc(subtitle)}</p></div>${action}</header>`;
+    const raw = () => this.data.rawState || {};
+    const reservoirState = (state,index) => (state.reservoirs || {})['reservoir_' + (index + 1)] || {};
+    const renderWorkspace = () => {
+      if (!workspaceView || workspaceView.hidden) return;
+      const state = raw(), page = this._workspacePage;
+      workspaceView.classList.toggle('simulation-view', page === 'simulation');
+      const rs = state.reservoirs || {}, names = this.resNames || [];
+      const resName = i => (rs['reservoir_' + (i+1)] || {}).repository_name || names[i] || `Reservoir ${i+1}`;
+      const statusClass = s => /CRITICAL|HIGH RISK/i.test(String(s || '')) ? 'bad' : /WATCH|WARNING/i.test(String(s || '')) ? 'warn' : 'ok';
+      if (page === 'reservoirs' && this._selectedReservoir !== null) {
+        const i = this._selectedReservoir, r = reservoirState(state,i), title = resName(i), risk = r.risk || 'Not available';
+        const focus = `<button class="page-action" data-focus-reservoir="${i}">FOCUS IN DIGITAL TWIN</button>`;
+        const topology = state.physical_control_topology || (state.metadata || {}).physical_control_topology;
+        const links = topology && Array.isArray(topology.links) ? topology.links.filter(link => link.from === title || link.to === title) : [];
+        const connectionText = links.length ? links.map(link => `${link.from} → ${link.to}`).join(' · ') : 'Physical flow relationships are not available in the current state payload.';
+        const riskReason = r.risk_reason ? `<p class="page-note" style="margin-top:10px">${esc(r.risk_reason)}</p>` : '';
+        workspaceView.innerHTML = `<div class="workspace-inner">${heading('Reservoirs / Asset detail',`R${i+1} · ${title}`,'Current operational state from the authoritative simulation payload.',`<button class="page-action" data-fleet>← BACK TO RESERVOIRS</button>`)}<div class="page-grid"><section class="page-card wide"><h2>Operational status ${pill(risk)}</h2><div class="metric-grid">${metric('Storage fraction',val(r.storage,3))}${metric('Inflow',val(r.inflow),'m³/s')}${metric('Controlled release',val(r.controlled_release),'m³/s')}${metric('Total outflow',val(r.release),'m³/s')}${metric('Gate position',val(typeof r.gate==='number'?r.gate*100:null),'%')}${metric('Spill',val(r.spill_mcm),'MCM / step')}${metric('Trend',r.trend)}${metric('Last state',state.state_identity && state.state_identity.state_id)}</div>${riskReason}</section><section class="page-card"><h2>Risk &amp; safety</h2><div class="metric-grid">${metric('Risk state',risk)}${metric('Safety layer',(state.auto_control || {}).safety_layer_status)}${metric('Downstream status',(state.downstream || {}).status)}${metric('State identity source',(state.state_identity || {}).source)}</div></section><section class="page-card"><h2>Flow connections</h2><p>${esc(connectionText)}</p></section><section class="page-card"><h2>Trend series</h2><p>No historical series available for the current state source.</p></section><section class="page-card wide"><h2>Digital twin</h2><p>Open the live scene and focus this reservoir. Simulation state continues while pages change.</p><div style="margin-top:12px">${focus}</div></section></div></div>`;
+      } else if (page === 'reservoirs') {
+        const entries = Object.keys(rs).filter(key => /^reservoir_\d+$/.test(key)).sort((a,b)=>Number(a.slice(10))-Number(b.slice(10)));
+        const rows = entries.map(key => { const i=Number(key.slice(10))-1,r=rs[key],risk=r.risk || 'Not available'; return `<tr data-open-reservoir="${i}"><td><button class="asset-link" data-open-reservoir="${i}">${esc(resName(i))}</button></td><td>${esc(val(r.storage,3))}</td><td>${esc(val(r.inflow))} m³/s</td><td>${esc(val(r.controlled_release))} m³/s</td><td>${esc(val(r.release))} m³/s</td><td>${esc(val(typeof r.gate==='number'?r.gate*100:null))}%</td><td>${esc(val(r.spill_mcm))} MCM</td><td>${pill(risk)}</td><td>${esc(r.trend || '—')}</td></tr>`; }).join('');
+        workspaceView.innerHTML = `<div class="workspace-inner">${heading('Operations / Reservoirs','RESERVOIR FLEET','Real-time operational status across the connected reservoir network.') }<section class="page-card wide">${entries.length ? `<div style="overflow:auto"><table class="data-table"><thead><tr><th>Reservoir</th><th>Storage fraction</th><th>Inflow</th><th>Controlled release</th><th>Total outflow</th><th>Gate</th><th>Spill</th><th>Risk</th><th>Trend</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p>Awaiting authoritative reservoir state.</p>'}</section></div>`;
+      } else if (page === 'forecasting') {
+        const fs=state.forecast_source_selection || {}, fp=state.forecast_provenance || {}, eligible=fs.control_forecast_validated;
+        const forecastRows=Object.keys(rs).filter(key=>/^reservoir_\d+$/.test(key)).map(key=>{const i=Number(key.slice(10))-1,r=rs[key];return `<tr><td>${esc(resName(i))}</td><td>${esc(r.forecast_status || '—')}</td><td>${esc(val(r.forecast_1d))}</td><td>${esc(val(r.forecast_3d))}</td><td>${esc(val(r.forecast_7d))}</td><td>${esc(r.forecast_source || '—')}</td><td>${pill(r.forecast_is_simulated === true ? 'SIMULATION INPUT' : r.forecast_provenance || 'Not available')}</td></tr>`}).join('');
+        const replayNote=fs.replay_is_historical_not_live===true ? 'Validated replay is historical data and is not a prediction of current live conditions.' : 'Forecast source description is shown as reported by the backend.';
+        workspaceView.innerHTML=`<div class="workspace-inner">${heading('Operations / Forecasting','FORECASTING','Forecast provenance, horizon values, and controller eligibility from current state.')}<div class="page-grid"><section class="page-card third"><h2>Forecast source</h2><div class="metric-grid">${metric('Selected source',fs.selected)}${metric('Model',fp.model)}${metric('Forecast status',(state.forecast_summary || {}).status)}</div><p style="margin-top:12px">${esc(replayNote)}</p></section><section class="page-card third"><h2>Control eligibility</h2><div class="metric-grid">${metric('Forecast eligible',eligible===true?'ELIGIBLE':eligible===false?'NOT ELIGIBLE':'Not available')}${metric('AUTO forecast gate',(state.auto_control || {}).forecast_control_eligible===true?'ELIGIBLE':(state.auto_control || {}).forecast_control_eligible===false?'NOT ELIGIBLE':'Not available')}</div><p style="margin-top:12px">Eligibility is displayed directly from the authoritative forecast selection and control state.</p></section><section class="page-card third"><h2>Provenance</h2><p>${esc(fp.live_path)}</p><p style="margin-top:8px">${esc(fp.provenance_note)}</p></section><section class="page-card wide"><h2>Reservoir forecast horizons <span class="page-note">${esc(fp.forecast_unit || '')}</span></h2><div style="overflow:auto"><table class="data-table"><thead><tr><th>Reservoir</th><th>Status</th><th>1 day</th><th>3 days</th><th>7 days</th><th>Source</th><th>Provenance</th></tr></thead><tbody>${forecastRows || '<tr><td colspan="7">Awaiting authoritative forecast state.</td></tr>'}</tbody></table></div></section></div></div>`;
+      } else if (page === 'simulation') {
+        const sim=state.simulation || {}, fs=state.forecast_source_selection || {};
+        workspaceView.innerHTML=`<div class="workspace-inner">${heading('Operations / Digital twin','SIMULATION','Live Three.js reservoir network. Simulation controls remain available below.') }<div class="simulation-strip">${metric('Simulation state',sim.running===true?'RUNNING':sim.running===false?'PAUSED':'Not available')}${metric('Controller',state.controller_mode)}${metric('Forecast source',fs.selected)}${metric('State ID',(state.state_identity || {}).state_id)}${metric('Simulation clock',state.simulation_time)}</div><div class="sim-camera-controls"><span class="k">CAMERA PRESETS</span><button class="page-action" data-camera="overview">OVERVIEW</button>${[1,2,3,4].map(n=>`<button class="page-action" data-camera="reservoir${n}">R${n}</button>`).join('')}<button class="page-action" data-camera="downstream">DOWNSTREAM</button></div></div>`;
+      } else if (page === 'risk') {
+        const entries=Object.keys(rs).filter(key=>/^reservoir_\d+$/.test(key));
+        const counts={'NORMAL':0,'WATCH':0,'HIGH RISK':0,'CRITICAL':0};
+        entries.forEach(key=>{const risk=String(rs[key].risk || '').toUpperCase();if(risk.includes('CRITICAL'))counts.CRITICAL++;else if(risk.includes('HIGH'))counts['HIGH RISK']++;else if(risk.includes('WATCH')||risk.includes('WARNING'))counts.WATCH++;else if(risk.includes('NORMAL'))counts.NORMAL++});
+        const d=state.downstream || {}, ac=state.auto_control || {}, note=state.notification || {}, mb=state.mass_balance || {}, gmail=this._gmailSettingsSnapshot || null;
+        const active=note.incident_id && /HIGH|CRITICAL/.test(String(note.severity || '').toUpperCase());
+        const alertEnabled = String(note.severity || '').toUpperCase() === 'CRITICAL' ? gmail && gmail.critical_enabled : String(note.severity || '').toUpperCase() === 'HIGH' ? gmail && gmail.high_enabled : null;
+        const recipient = gmail && gmail.recipient ? gmail.recipient.replace(/^(.).+(@.*)$/, '$1***$2') : (note.recipient ? String(note.recipient).replace(/^(.).+(@.*)$/, '$1***$2') : null);
+        const emailSettings=`<button class="page-action" data-open-settings>OPEN GMAIL ALERT SETTINGS</button>`;
+        workspaceView.innerHTML=`<div class="workspace-inner">${heading('Operations / Risk & safety','RISK OVERVIEW','Current operator attention items from reservoir risk, safety, downstream, and notification state.') }<div class="page-grid"><section class="page-card wide"><h2>Current risk overview</h2><div class="metric-grid">${Object.entries(counts).map(([k,v])=>metric(k,entries.length?String(v):'—')).join('')}</div><div class="page-list" style="margin-top:12px">${entries.map(key=>{const i=Number(key.slice(10))-1,r=rs[key];return `<div class="page-list-row"><strong>${esc(resName(i))}</strong><span>${esc(r.risk_reason || 'No risk explanation available.')}</span>${pill(r.risk || 'Not available')}</div>`}).join('') || '<p>Awaiting authoritative risk state.</p>'}</div></section><section class="page-card"><h2>Downstream risk</h2><div class="metric-grid">${metric('Current flow',val(d.flow_m3_s),'m³/s')}${metric('Safe limit',val(d.capacity_m3_s),'m³/s')}${metric('Status',d.status)}${metric('Safety state',ac.safety_layer_status)}${metric('Mass balance',mb.status)}${metric('Notification',note.status)}</div></section><section class="page-card"><h2>Active incidents</h2>${active?`<div class="metric-grid">${metric('Incident state',note.severity)}${metric('Incident ID',note.incident_id)}${metric('Started',note.timestamp)}${metric('Notification state',note.status)}${metric('Recipient',recipient)}</div>${note.status==='NOT_CONFIGURED'?'<p style="margin-top:10px">Operator notification required.</p>':''}`:'<p>No active high or critical incident is reported in the notification state.</p>'}</section><section class="page-card wide"><h2>Operator notification</h2><div class="metric-grid">${metric('Gmail',gmail ? (gmail.connected?'CONNECTED':'NOT CONNECTED') : 'Not available')}${metric('Alert condition',alertEnabled===null?'Not available':alertEnabled?'ENABLED':'DISABLED')}${metric('Last notification',(note.last_notification || {}).status || note.status)}${metric('Recipient',recipient)}</div><div style="margin-top:12px">${emailSettings}</div></section></div></div>`;
+      } else if (page === 'reports') {
+        const events=Array.isArray(state.event_log)?state.event_log.slice().reverse():[];
+        const groups=[['RISK EVENTS',e=>/risk|incident|downstream/i.test(String(e.kind || ''))],['CONTROL EVENTS',e=>/gate|control|mode/i.test(String(e.kind || ''))],['NOTIFICATION EVENTS',e=>/notification|email|alert/i.test(String(e.kind || ''))],['SYSTEM EVENTS',e=>!/risk|incident|downstream|gate|control|mode|notification|email|alert/i.test(String(e.kind || ''))]];
+        const groupHTML=groups.map(([title,match])=>{const rows=events.filter(match);return `<details class="page-card wide page-event-group"><summary>${title} · ${rows.length}</summary>${rows.length?`<div class="page-list">${rows.map(e=>`<div class="page-list-row"><span class="meta">${esc(e.timestamp)}</span><span>${esc(e.text || e.kind)}</span>${pill(e.status || e.severity || e.kind)}</div>`).join('')}</div>`:'<p style="padding:0 16px 14px">No events recorded.</p>'}</details>`}).join('');
+        const sim=state.simulation || {}, down=state.downstream || {}, notification=state.notification || {};
+        workspaceView.innerHTML=`<div class="workspace-inner">${heading('Operations / Records','REPORTS','Event history from the backend state log. No events are synthesized.') }<div class="page-grid"><section class="page-card wide"><h2>Operations summary</h2><div class="metric-grid">${metric('Simulation',sim.running===true?'RUNNING':sim.running===false?'PAUSED':'Not available')}${metric('Controller',state.controller_mode)}${metric('Forecast source',(state.forecast_source_selection || {}).selected)}${metric('State ID',(state.state_identity || {}).state_id)}${metric('Downstream flow',val(down.flow_m3_s),'m³/s')}${metric('Downstream status',down.status)}${metric('Last notification',(notification.last_notification || {}).status || notification.status)}</div></section>${events.length?groupHTML:'<section class="page-card wide"><h2>Event history</h2><p>No events recorded.</p></section>'}</div></div>`;
+      }
+    };
+    this._renderWorkspacePage = renderWorkspace;
+    const openWorkspace = page => {
+      closeDrawer(); settingsView.hidden=true; workspaceView.hidden=false; this._workspacePage=page;
+      this.container.classList.add('workspace-open'); this.container.classList.toggle('workspace-simulation',page==='simulation');
+      if(this._onResize) this._onResize();
+      rail.querySelectorAll('.rail-item').forEach(b=>{b.classList.toggle('on',b.dataset.nav===page);b.setAttribute('aria-current',b.dataset.nav===page?'page':'false')});
+      if(page!=='reservoirs') this._selectedReservoir=null;
+      if(page==='simulation') { const focus=this.container.classList.contains('scene-focus'); if(focus) setFocus(false); this.el.camBtns.forEach(b=>b.classList.toggle('on',b.dataset.cam==='overview')); this.setCameraPreset('overview'); }
+      renderWorkspace();
+      if(page==='risk') loadNotificationSettings();
+    };
+    workspaceView.addEventListener('click',event=>{
+      const open=event.target.closest('[data-open-reservoir]'); if(open){this._selectedReservoir=Number(open.dataset.openReservoir);renderWorkspace();return;}
+      if(event.target.closest('[data-fleet]')){this._selectedReservoir=null;renderWorkspace();return;}
+      const focus=event.target.closest('[data-focus-reservoir]'); if(focus){const i=Number(focus.dataset.focusReservoir);workspaceView.hidden=true;this.container.classList.remove('workspace-open','workspace-simulation');if(this._onResize)this._onResize();this._workspacePage='simulation';rail.querySelectorAll('.rail-item').forEach(b=>b.classList.toggle('on',b.dataset.nav==='simulation'));showReservoir(i);return;}
+      const camera=event.target.closest('[data-camera]');if(camera){this.setCameraPreset(camera.dataset.camera);return;}
+      if(event.target.closest('[data-open-settings]'))openSettings('notifications');
+    });
+    workspaceView.addEventListener('pointerenter',()=>{this._workspaceInteracting=true});
+    workspaceView.addEventListener('pointerleave',()=>{this._workspaceInteracting=false;if(!workspaceView.hidden)renderWorkspace()});
+    workspaceView.addEventListener('focusout',()=>{queueMicrotask(()=>{if(!workspaceView.hidden&&!workspaceView.contains(document.activeElement))renderWorkspace()})});
+    /* Nav rail: single-page workspace views; the scene and renderer remain mounted. */
+    rail.querySelectorAll('.rail-item').forEach(item => item.addEventListener('click', () => {
+      if (item.dataset.nav === 'settings') { openSettings(); return; }
+      if (item.dataset.nav === 'home') {
+        settingsView.hidden=true; workspaceView.hidden=true; this._selectedReservoir=null; closeDrawer();
+        this.container.classList.remove('workspace-open','workspace-simulation');
+        if(this._onResize) this._onResize();
+        rail.querySelectorAll('.rail-item').forEach(b=>{b.classList.toggle('on',b.dataset.nav==='home');b.setAttribute('aria-current',b.dataset.nav==='home'?'page':'false')});
+        this.setCameraPreset('overview'); return;
+      }
+      openWorkspace(item.dataset.nav);
     }));
     rail.querySelectorAll('.rail-item').forEach(item => {
       item.tabIndex = 0;
@@ -2734,6 +3183,14 @@ class ReservoirTwinRenderer {
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); item.click(); }
       });
     });
+    setting('[data-alert-recipient]').addEventListener('input', event => {
+      setting('[data-send-test]').disabled = event.target.value.trim() !== savedNotificationRecipient || !event.target.value.includes('@');
+    });
+    const oauthResult = new URLSearchParams(window.location.search).get('gmail_oauth');
+    if (new URLSearchParams(window.location.search).get('settings') === 'notifications') {
+      openSettings('notifications');
+      if (oauthResult === 'error') setting('[data-gmail-config-error]').textContent = 'Google authorization did not complete. Check OAuth configuration and try again.';
+    }
     this._cachePanelAnchors();
     // Track actual dock dimensions instead of overlapping fixed bottom offsets.
     this._layoutObserver = new ResizeObserver(() => {
@@ -2908,6 +3365,38 @@ class ReservoirTwinRenderer {
     const st = hasState ? String(this.data.downstreamStatus || 'UNKNOWN') : 'UNKNOWN';
     const stColor = st === 'NORMAL' ? 'var(--ok)' : st === 'WARNING' ? 'var(--warn)'
                   : st === 'CRITICAL' ? 'var(--bad)' : 'var(--ink-faint)';
+    if (el.operatorAlert) {
+      const normalized = st.toUpperCase().replace(/[_-]+/g, ' ').trim();
+      const severe = ['ALERT', 'HIGH RISK', 'DANGER', 'CRITICAL'].includes(normalized);
+      const watch = ['WATCH', 'WARNING'].includes(normalized);
+      el.operatorAlert.hidden = !hasState;
+      el.operatorAlert.dataset.severity = severe ? 'critical' : 'watch';
+      if (severe) {
+        const notification = this.data.notification || {};
+        const delivery = notification.status || 'NOT_CONFIGURED';
+        const deliveryLabel = notification.error === 'Alert disabled in notification settings' ? 'EMAIL DISABLED'
+          : ({PENDING:'EMAIL PENDING', SENT:'EMAIL SENT', FAILED:'EMAIL FAILED', NOT_CONFIGURED:'EMAIL NOT CONFIGURED'}[delivery] || 'EMAIL NOT CONFIGURED');
+        el.operatorAlert.textContent = 'DOWNSTREAM · HIGH RISK · ' + deliveryLabel;
+        const raw = this.data.rawState || {};
+        const reason = Object.values(raw.reservoirs || {}).map(r => r.risk_reason).filter(Boolean).join('; ') || 'Not supplied by authoritative state';
+        const source = (raw.forecast_source_selection || {}).selected || (raw.forecast_provenance || {}).live_path || 'UNKNOWN';
+        const mode = raw.controller_mode || 'UNKNOWN';
+        const incident = notification.incident_id || 'Pending incident evaluation';
+        const recipient = notification.recipient || 'Not configured';
+        const timestamp = notification.timestamp || '—';
+        const forecastStatus = (raw.forecast_summary || {}).status || 'UNKNOWN';
+        if (el.notificationDetail) el.notificationDetail.textContent = `DOWNSTREAM HIGH RISK\nRisk reason: ${reason}\nDownstream flow: ${dsKnown ? ds.toFixed(2) + ' m³/s' : '—'}\nCapacity: ${typeof this.data.downstreamCapacity === 'number' ? this.data.downstreamCapacity.toFixed(1) + ' m³/s' : '—'}\nMode: ${mode}\nSource: ${source}\nForecast status: ${forecastStatus}\nIncident: ${incident}\nNotification: ${delivery}\nTimestamp: ${timestamp}\nRecipient: ${recipient}\nDelivery detail: ${notification.error || '—'}`;
+      } else if (watch) {
+        el.operatorAlert.textContent = 'DOWNSTREAM · WARNING';
+        if (el.notificationDetail) el.notificationDetail.hidden = true;
+      } else if (st === 'NORMAL') {
+        el.operatorAlert.textContent = 'DOWNSTREAM · SAFE';
+        if (el.notificationDetail) el.notificationDetail.hidden = true;
+      } else {
+        el.operatorAlert.textContent = 'DOWNSTREAM · STATUS UNKNOWN';
+        if (el.notificationDetail) el.notificationDetail.hidden = true;
+      }
+    }
     const util = (hasState && typeof this.data.downstreamUtil === 'number')
       ? clamp01(this.data.downstreamUtil) : 0;
     const capTxt = (hasState && typeof this.data.downstreamCapacity === 'number')

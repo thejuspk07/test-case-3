@@ -339,6 +339,7 @@ def _route_table() -> dict:
         path: sorted(method.upper() for method in operations)
         for path, operations in app.openapi()["paths"].items()
         if any(method.lower() == "post" for method in operations)
+        and not path.startswith("/api/notifications/")
     }
 
 

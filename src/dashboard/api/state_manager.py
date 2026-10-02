@@ -12,6 +12,7 @@ from typing import Optional
 from src.dashboard.sim_bridge import SimBridge
 from src.common import units
 from src.dashboard.twin_component.state_adapter import adapt_state_for_twin
+from src.dashboard.api.notifications import DownstreamNotificationManager
 from src.modeling.inference import LiveForecaster, ForecastUnavailableError
 from src.modeling.gnn_inference import LiveGNNForecaster
 from src.modeling.gnn_advisory import (
@@ -174,6 +175,8 @@ class GlobalSimulationState:
         #: step, so a NORMAL -> HIGH transition can be reported truthfully.
         self._last_risk = {}
         self._last_downstream_status = None
+        self.notification_manager = DownstreamNotificationManager(on_update=self._schedule_notification_broadcast)
+        self._notification_loop = None
         #: Lazily constructed READ-ONLY reader of the frozen V3 held-out
         #: prediction artifact (VALIDATED_REPLAY source only).
         self._v3_replay_adapter = None
@@ -1357,8 +1360,24 @@ class GlobalSimulationState:
                 previous_gates, gate_commands
             )
         state = self.get_adapted_state()
+        # Observe only authoritative step results. Email delivery runs on a
+        # bounded worker and cannot hold up simulation/control/WebSocket work.
+        self.notification_manager.observe(state)
+        state["notification"] = self.notification_manager.payload()
         self._record_control_events(state)
         return state
+
+    def _schedule_notification_broadcast(self):
+        """Publish asynchronous mail completion without blocking its SMTP worker."""
+        loop = self._notification_loop
+        if loop is not None and loop.is_running():
+            loop.call_soon_threadsafe(lambda: asyncio.create_task(self.broadcast_state()))
+
+    def close_resolved_notification_after_reset(self):
+        """Close a prior incident from the reset cascade's existing status."""
+        reset_state = self.bridge.get_state({})
+        downstream = adapt_state_for_twin(reset_state, self.mode, self.storm_intensity).get("downstream") or {}
+        self.notification_manager.close_if_resolved(downstream.get("status"))
 
     #: Tolerance for the applied-vs-final-action comparison (gate PERCENT).
     ACTION_MATCH_TOLERANCE_PERCENT = 1e-9
@@ -1480,7 +1499,9 @@ class GlobalSimulationState:
                 if res in current_state["reservoirs"]:
                     current_state["reservoirs"][res]["requested_gate_pct"] = gate_val
 
-        return adapt_state_for_twin(current_state, self.mode, self.storm_intensity)
+        adapted = adapt_state_for_twin(current_state, self.mode, self.storm_intensity)
+        adapted["notification"] = self.notification_manager.payload()
+        return adapted
 
     def _record_loop_overrun(self, overrun_s: float) -> None:
         """
@@ -1533,6 +1554,7 @@ class GlobalSimulationState:
         * Physics, controller timing semantics and `sim_speed`'s meaning
           (steps per second) are unchanged: only WHEN the sleep happens moved.
         """
+        self._notification_loop = asyncio.get_running_loop()
         # Monotonic clock for the deadline arithmetic.
         clock = time.monotonic
         next_deadline = clock()
