@@ -1376,8 +1376,10 @@ class GlobalSimulationState:
     def close_resolved_notification_after_reset(self):
         """Close a prior incident from the reset cascade's existing status."""
         reset_state = self.bridge.get_state({})
-        downstream = adapt_state_for_twin(reset_state, self.mode, self.storm_intensity).get("downstream") or {}
-        self.notification_manager.close_if_resolved(downstream.get("status"))
+        adapted = adapt_state_for_twin(reset_state, self.mode, self.storm_intensity)
+        adapted["state_identity"] = {"network_timestep": int(self.bridge.cascade.network.timestep)}
+        downstream = adapted.get("downstream") or {}
+        self.notification_manager.close_if_resolved(downstream.get("status"), state=adapted)
 
     #: Tolerance for the applied-vs-final-action comparison (gate PERCENT).
     ACTION_MATCH_TOLERANCE_PERCENT = 1e-9

@@ -9,6 +9,8 @@ import os
 import smtplib
 import ssl
 import uuid
+from src.notifications.telegram_alerts import TelegramAdapter
+from src.notifications.discord_alerts import DiscordAdapter, GmailAdapter
 
 
 def _config(recipient_override=None):
@@ -97,6 +99,9 @@ class DownstreamNotificationManager:
         self._test_pending = False
         self._test_lock = Lock()
         self._test_future = None
+        self.telegram = TelegramAdapter(on_update=self._changed)
+        self.gmail = GmailAdapter(self._observe_gmail)
+        self.discord = DiscordAdapter(on_update=self._changed)
 
     def _oauth(self):
         from src.dashboard.api.gmail_auth import gmail_oauth
@@ -118,7 +123,8 @@ class DownstreamNotificationManager:
         records = [("TEST", self.last_test), ("INCIDENT", self.current or self.last_incident)]
         kind, latest = max(((k, v) for k, v in records if v),
                            key=lambda item: item[1].get("timestamp", ""), default=(None, {}))
-        return {"gmail": {"status": "CONNECTED" if connected else ("SMTP CONFIGURED" if smtp else "NOT CONNECTED"),
+        return {"discord": self.discord.settings_payload(), "active_incidents": self.discord.active_incidents(),
+                "telegram": self.telegram.settings_payload(), "gmail": {"status": "CONNECTED" if connected else ("SMTP CONFIGURED" if smtp else "NOT CONNECTED"),
                            "connected": connected, "oauth_configured": oauth["oauth_configured"],
                            "email": oauth["email"] if connected else (os.getenv("AQUAFLOW_SMTP_USERNAME", "") if smtp else None)},
                 "recipient": self.preferences["recipient"], "high_enabled": self.preferences["high_enabled"],
@@ -129,7 +135,12 @@ class DownstreamNotificationManager:
                 "configuration_error": None if oauth["oauth_configured"] else
                 "Google OAuth is not configured. Administrator OAuth credentials are required to connect a Google account."}
 
-    def update_preferences(self, recipient=None, high_enabled=None, critical_enabled=None):
+    def update_preferences(self, recipient=None, high_enabled=None, critical_enabled=None, telegram_enabled=None,
+                           discord_enabled=None):
+        if discord_enabled is not None:
+            self.discord.set_enabled(discord_enabled)
+        if telegram_enabled is not None:
+            self.telegram.enabled = bool(telegram_enabled)
         if recipient is not None:
             self.preferences["recipient"] = recipient.strip()
         if high_enabled is not None:
@@ -179,6 +190,18 @@ class DownstreamNotificationManager:
             except Exception: pass
 
     def observe(self, state):
+        self.gmail.notify(state)
+        try:
+            self.discord.notify(state, self.current)
+        except Exception:
+            pass
+        # Additive dispatch: Gmail has already queued independently. No I/O here.
+        try:
+            self.telegram.notify(state, self.current)
+        except Exception:
+            pass
+
+    def _observe_gmail(self, state):
         severity = str((state.get("downstream") or {}).get("status", "UNKNOWN")).upper()
         if severity not in ("WARNING", "CRITICAL"):
             self.current = None
@@ -229,11 +252,20 @@ class DownstreamNotificationManager:
                                          "timestamp": last.get("timestamp"), "error": last.get("error")}
         payload["test_email"] = dict(self.last_test) if self.last_test else None
         payload["test_pending"] = self._test_pending
+        payload["telegram"] = self.telegram.settings_payload()
+        payload["discord"] = self.discord.settings_payload()
+        payload["active_incidents"] = self.discord.active_incidents()
         return payload
 
-    def close_if_resolved(self, severity):
+    def acknowledge(self, incident_id):
+        return self.discord.acknowledge(incident_id)
+
+    def close_if_resolved(self, severity, state=None):
         if str(severity).upper() not in ("WARNING", "CRITICAL"):
             self.current = None
+            self.telegram.close()
+            if str(severity).upper() == "NORMAL":
+                self.discord.close(state)
 
 
 def _now():

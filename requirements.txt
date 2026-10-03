@@ -24,11 +24,11 @@ torch-geometric
 # here so `pip install -r requirements.txt` also produces a runnable backend.
 fastapi
 uvicorn
+# Async Discord webhook delivery (also used by FastAPI TestClient).
+httpx
 
 # Testing
 pytest
-# Required by fastapi.testclient.TestClient used in tests/
-httpx
 
 # Development & Exploration
 jupyter

@@ -275,6 +275,12 @@
   .settings-crumb{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:7px}
   .settings-card{background:var(--panel);border:1px solid var(--hairline);border-radius:10px;padding:16px;margin:12px 0;box-shadow:var(--shadow)}
   .settings-card h3{font-size:12px;letter-spacing:.08em;margin:0 0 12px;color:var(--ink)}
+  .settings-channel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+  .settings-channel-grid .settings-card{margin:0;min-width:0}
+  [data-discord-webhook]{overflow-wrap:anywhere;max-width:65%}
+  [data-active-incidents] .settings-row{flex-wrap:wrap}
+  [data-active-incidents] .settings-label{min-width:180px}
+  @media(max-width:900px){.settings-channel-grid{grid-template-columns:1fr}}
   .settings-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--hairline-soft);font-size:11px}
   .settings-row:first-of-type{border-top:0}.settings-row .settings-label{flex:1;color:var(--lbl)}
   .settings-input{width:min(100%,390px);padding:9px 10px;border:1px solid var(--hairline);border-radius:6px;background:var(--btn-bg);color:var(--ink);font:inherit;font-size:11px}
@@ -1362,6 +1368,34 @@ class ReservoirTwinRenderer {
     const next=this._fps<50 ? Math.max(min,current-.1) : this._fps>59 ? Math.min(max,current+.025) : current;
     if(Math.abs(next-current)>.015)this.renderer.setPixelRatio(next);
   }
+  _updateDiscordPanel(discord, incidents = []) {
+    if (!this._settingsView || !discord) return;
+    const q = selector => this._settingsView.querySelector(selector);
+    q('[data-discord-status]').textContent = discord.status || 'Unavailable';
+    q('[data-discord-webhook]').textContent = discord.masked_webhook || '—';
+    q('[data-discord-enabled]').checked = discord.enabled === true;
+    q('[data-discord-delivery]').textContent = discord.last_delivery || 'NOT_CONFIGURED';
+    q('[data-discord-time]').textContent = discord.last_delivery_timestamp || '—';
+    q('[data-discord-test]').disabled = discord.last_delivery === 'PENDING';
+    q('[data-discord-result]').textContent = discord.error || '';
+    const signature = JSON.stringify(incidents);
+    if (signature === this._incidentPanelSignature) return;
+    this._incidentPanelSignature = signature;
+    const list = q('[data-active-incidents]');
+    list.replaceChildren();
+    if (!incidents.length) { list.textContent = 'No active downstream incidents.'; return; }
+    for (const incident of incidents) {
+      const row = document.createElement('div'); row.className = 'settings-row';
+      const text = document.createElement('span'); text.className = 'settings-label';
+      text.textContent = `${incident.incident_id} · ${incident.severity} · ${incident.status}`;
+      const button = document.createElement('button'); button.className = 'settings-button';
+      button.dataset.ackIncident = incident.incident_id;
+      button.textContent = incident.acknowledged ? 'Acknowledged' : 'Acknowledge';
+      button.disabled = incident.acknowledged === true;
+      row.append(text, button); list.append(row);
+    }
+  }
+
   updateState(state) {
     if (!state || this._disposed) return;
     const signature = JSON.stringify(state);
@@ -1369,6 +1403,7 @@ class ReservoirTwinRenderer {
     this._stateSignature = signature;
     if (this._settingsView && !this._settingsView.hidden && state.notification) {
       const note = state.notification, last = note.last_notification || {};
+      this._updateDiscordPanel(note.discord, note.active_incidents || []);
       const test = note.test_email;
       const status = this._settingsView.querySelector('[data-last-notification-status]');
       const stamp = this._settingsView.querySelector('[data-last-notification-time]');
@@ -1379,6 +1414,16 @@ class ReservoirTwinRenderer {
       if (send && input) send.disabled = !!note.test_pending || !input.value.includes('@') || input.value.trim() !== this._settingsSavedRecipient;
       const result = this._settingsView.querySelector('[data-test-result]');
       if (result && test) result.textContent = test.status === 'PENDING' ? 'Test email PENDING…' : `Test email ${test.status}${test.error ? ': ' + test.error : ''}`;
+      const telegram = note.telegram;
+      if (telegram) {
+        const q = selector => this._settingsView.querySelector(selector);
+        q('[data-telegram-status]').textContent = telegram.status;
+        q('[data-telegram-chat]').textContent = telegram.chat_id || '—';
+        q('[data-telegram-delivery]').textContent = telegram.last_delivery;
+        q('[data-telegram-time]').textContent = telegram.last_delivery_timestamp || '—';
+        q('[data-telegram-test]').disabled = telegram.last_delivery === 'PENDING';
+        q('[data-telegram-result]').textContent = telegram.error || '';
+      }
     }
     this.renderer.shadowMap.needsUpdate = true;
     const rs = state.reservoirs || {};
@@ -2721,6 +2766,7 @@ class ReservoirTwinRenderer {
       <main class="settings-main"><div class="settings-top"><div><h1>SETTINGS</h1><div class="settings-crumb" data-settings-crumb>Notifications / Gmail Alerts</div></div>
         <button class="settings-button" data-settings-close aria-label="Back to dashboard">← BACK</button></div>
         <section data-settings-page="notifications">
+          <div class="settings-channel-grid">
           <div class="settings-card"><h3>GMAIL ALERTS</h3>
             <div class="settings-row"><span class="settings-label">Gmail connection</span><span class="settings-status" data-gmail-status>● NOT CONNECTED</span></div>
             <div class="settings-row" data-gmail-account-row hidden><span class="settings-label">Google account / email</span><strong data-gmail-account>—</strong></div>
@@ -2728,6 +2774,22 @@ class ReservoirTwinRenderer {
               <button class="settings-button" data-gmail-disconnect hidden>DISCONNECT</button></div>
             <div class="settings-error" data-gmail-config-error hidden></div>
             <p class="settings-hint">Connect through Google OAuth. AquaFlow never asks for your Google password. If OAuth is unavailable, configured Gmail SMTP can continue as the delivery fallback.</p>
+          </div>
+          <div class="settings-card" data-discord-card><h3>DISCORD</h3>
+            <div class="settings-row"><span class="settings-label">Status</span><strong data-discord-status>Loading…</strong></div>
+            <div class="settings-row"><span class="settings-label">Webhook</span><strong data-discord-webhook>—</strong></div>
+            <div class="settings-row"><span class="settings-label">Downstream alerts</span><input class="settings-toggle" type="checkbox" data-discord-enabled aria-label="Discord downstream alerts"></div>
+            <div class="settings-row"><span class="settings-label">Last delivery</span><strong data-discord-delivery>NOT_CONFIGURED</strong></div>
+            <div class="settings-row"><span class="settings-label">Last delivery timestamp</span><strong data-discord-time>—</strong></div>
+            <button class="settings-button primary" data-discord-test>Send Test Discord Alert</button>
+            <span class="settings-hint" data-discord-result aria-live="polite"></span>
+            <p class="settings-hint" data-discord-policy>Immediate WARNING/CRITICAL alert per incident, then reminders every 5 minutes until acknowledged here. 30-second cooldown; one recovery message on NORMAL. Gmail delivery is independent.</p>
+          </div>
+          </div>
+          <div class="settings-card"><h3>ACTIVE INCIDENTS</h3>
+            <div data-active-incidents aria-live="polite">No active downstream incidents.</div>
+            <span class="settings-hint" data-ack-result aria-live="polite"></span>
+            <p class="settings-hint">Acknowledgement stops Discord reminders. It does not change gates or resolve downstream risk.</p>
           </div>
           <div class="settings-card"><h3>DOWNSTREAM ALERTS</h3>
             <div class="settings-row"><label class="settings-label" for="alert-recipient">Alert recipient email</label><input class="settings-input" id="alert-recipient" type="email" autocomplete="email" placeholder="operator@example.com" data-alert-recipient></div>
@@ -2743,6 +2805,17 @@ class ReservoirTwinRenderer {
             <button class="settings-button primary" data-send-test> SEND TEST EMAIL </button>
             <span class="settings-hint" data-test-result aria-live="polite"></span>
             <p class="settings-hint" style="margin-top:8px">Test messages go only to the saved recipient. The action stays disabled until a valid recipient is configured.</p>
+          </div>
+          <div class="settings-card" data-telegram-card><h3>TELEGRAM</h3>
+            <div class="settings-row"><span class="settings-label">Status</span><strong data-telegram-status>Loading…</strong></div>
+            <div class="settings-row"><span class="settings-label">Chat ID</span><strong data-telegram-chat>—</strong></div>
+            <div class="settings-row"><span class="settings-label">Downstream alerts</span><input class="settings-toggle" type="checkbox" data-telegram-enabled aria-label="Telegram downstream alerts"></div>
+            <p class="settings-hint">One notification per incident</p>
+            <p class="settings-hint">Telegram sends authoritative downstream WARNING/CRITICAL alerts. It does not control the simulation.</p>
+            <div class="settings-row"><span class="settings-label">Last delivery</span><strong data-telegram-delivery>NOT_CONFIGURED</strong></div>
+            <div class="settings-row"><span class="settings-label">Last delivery timestamp</span><strong data-telegram-time>—</strong></div>
+            <button class="settings-button primary" data-telegram-test>Send Test Telegram Alert</button>
+            <span class="settings-hint" data-telegram-result aria-live="polite"></span>
           </div>
         </section>
         <section data-settings-page="general" hidden><div class="settings-card"><h3>GENERAL</h3><p class="settings-hint">AquaFlow operator settings. Regional and display preferences are unchanged.</p></div><div class="settings-card"><h3>GPU DIAGNOSTICS</h3><div class="settings-row"><span class="settings-label">GPU</span><strong data-gpu-name>Detecting…</strong></div><div class="settings-row"><span class="settings-label">WebGL version</span><strong data-gpu-api>—</strong></div><div class="settings-row"><span class="settings-label">Renderer</span><strong data-gpu-renderer>—</strong></div><div class="settings-row"><span class="settings-label">Vendor</span><strong data-gpu-vendor>—</strong></div><div class="settings-row"><span class="settings-label">Mode</span><strong>HIGH PERFORMANCE REQUESTED</strong></div><p class="settings-hint">Browser and operating system GPU preferences determine the physical adapter. AquaFlow requests the high-performance adapter and reports the WebGL information the browser exposes.</p></div></section>
@@ -3223,6 +3296,15 @@ class ReservoirTwinRenderer {
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || 'Unable to load notification settings');
         const gmail = data.gmail || {};
+        this._updateDiscordPanel(data.discord, data.active_incidents || []);
+        const telegram = data.telegram || {};
+        setting('[data-telegram-status]').textContent = telegram.status || 'Unavailable';
+        setting('[data-telegram-chat]').textContent = telegram.chat_id || '—';
+        setting('[data-telegram-enabled]').checked = telegram.enabled === true;
+        setting('[data-telegram-delivery]').textContent = telegram.last_delivery || 'NOT_CONFIGURED';
+        setting('[data-telegram-time]').textContent = telegram.last_delivery_timestamp || '—';
+        setting('[data-telegram-test]').disabled = telegram.last_delivery === 'PENDING';
+        setting('[data-telegram-result]').textContent = telegram.error || '';
         this._gmailSettingsSnapshot = {connected:!!gmail.connected,recipient:data.recipient || '',high_enabled:data.high_enabled === true,critical_enabled:data.critical_enabled === true};
         if (this._workspacePage === 'risk' && this._renderWorkspacePage) this._renderWorkspacePage();
         setting('[data-gmail-status]').textContent = gmail.connected ? '● CONNECTED' : gmail.auth_error ? '● AUTHENTICATION ERROR' : '● NOT CONNECTED';
@@ -3272,7 +3354,7 @@ class ReservoirTwinRenderer {
     const selectSettingsSection = section => {
       settingsView.querySelectorAll('[data-settings-section]').forEach(b => b.classList.toggle('on', b.dataset.settingsSection === section));
       settingsView.querySelectorAll('[data-settings-page]').forEach(p => p.hidden = p.dataset.settingsPage !== section);
-      setting('[data-settings-crumb]').textContent = section === 'notifications' ? 'Notifications / Gmail Alerts' : section;
+      setting('[data-settings-crumb]').textContent = section === 'notifications' ? 'Notifications / Gmail, Discord & Telegram Alerts' : section;
     };
     settingsView.querySelectorAll('[data-settings-section]').forEach(button => button.addEventListener('click', () => selectSettingsSection(button.dataset.settingsSection)));
     setting('[data-settings-close]').addEventListener('click', closeSettings);
@@ -3323,6 +3405,72 @@ class ReservoirTwinRenderer {
         }
       } catch (error) { message.textContent = error.message; }
       await loadNotificationSettings();
+    });
+    setting('[data-discord-enabled]').addEventListener('change', async () => {
+      const toggle = setting('[data-discord-enabled]'); toggle.disabled = true;
+      let failure = '';
+      try {
+        const response = await fetch('/api/notifications/settings', {method:'PUT',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({discord_enabled:toggle.checked})});
+        if (!response.ok) throw new Error('Discord settings could not be saved');
+      } catch (error) { failure = error.message; }
+      await loadNotificationSettings(); toggle.disabled = false;
+      if (failure) setting('[data-discord-result]').textContent = failure;
+    });
+    setting('[data-discord-test]').addEventListener('click', async () => {
+      const button = setting('[data-discord-test]'); button.disabled = true;
+      let failure = '';
+      try {
+        const response = await fetch('/api/notifications/discord/test', {method:'POST'});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Discord test could not be started');
+        await loadNotificationSettings();
+        for (let remaining = 40; data.status === 'PENDING' && remaining && !settingsView.hidden; remaining--) {
+          await new Promise(resolve => setTimeout(resolve, 700));
+          await loadNotificationSettings();
+          if (setting('[data-discord-delivery]').textContent !== 'PENDING') break;
+        }
+      } catch (error) { failure = error.message; }
+      await loadNotificationSettings();
+      if (failure) setting('[data-discord-result]').textContent = failure;
+    });
+    setting('[data-active-incidents]').addEventListener('click', async event => {
+      const button = event.target.closest('button[data-ack-incident]');
+      if (!button || button.disabled) return;
+      button.disabled = true;
+      const result = setting('[data-ack-result]'); result.textContent = 'Acknowledging…';
+      try {
+        const response = await fetch(`/api/notifications/incidents/${encodeURIComponent(button.dataset.ackIncident)}/acknowledge`, {method:'POST'});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Acknowledgement failed');
+        result.textContent = 'Incident acknowledged. Discord reminders stopped.';
+        await loadNotificationSettings();
+      } catch (error) { result.textContent = error.message; button.disabled = false; }
+    });
+    setting('[data-telegram-enabled]').addEventListener('change', async () => {
+      try {
+        const response = await fetch('/api/notifications/settings', {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_enabled:setting('[data-telegram-enabled]').checked})});
+        if (!response.ok) throw new Error('Telegram settings could not be saved');
+        await loadNotificationSettings();
+      } catch (error) { setting('[data-telegram-result]').textContent = error.message; }
+    });
+    setting('[data-telegram-test]').addEventListener('click', async () => {
+      const button = setting('[data-telegram-test]'); button.disabled = true;
+      setting('[data-telegram-delivery]').textContent = 'PENDING';
+      try {
+        const response = await fetch('/api/notifications/telegram/test', {method:'POST'});
+        const data = await response.json();
+        if (!response.ok) throw new Error('Telegram test could not be started');
+        await loadNotificationSettings();
+        for (let remaining = 40; data.status === 'PENDING' && remaining && !settingsView.hidden; remaining--) {
+          await new Promise(resolve => setTimeout(resolve, 700));
+          await loadNotificationSettings();
+          if (setting('[data-telegram-delivery]').textContent !== 'PENDING') break;
+        }
+      } catch (error) {
+        setting('[data-telegram-delivery]').textContent = 'FAILED';
+        setting('[data-telegram-result]').textContent = error.message;
+      } finally { button.disabled = false; }
     });
     const esc = value => String(value == null || value === '' ? '—' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     const val = (value, digits=1) => typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString(undefined,{maximumFractionDigits:digits}) : '—';

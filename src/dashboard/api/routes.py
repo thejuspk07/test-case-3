@@ -112,6 +112,8 @@ class NotificationPreferences(BaseModel):
     recipient: str | None = None
     high_enabled: bool | None = None
     critical_enabled: bool | None = None
+    telegram_enabled: bool | None = None
+    discord_enabled: bool | None = None
 
     @field_validator("recipient")
     @classmethod
@@ -143,6 +145,31 @@ async def send_test_notification():
         raise HTTPException(status_code=422, detail=str(exc)) from None
     except RuntimeError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from None
+
+
+@router.post("/notifications/telegram/test")
+async def send_test_telegram_notification():
+    return sim_state.notification_manager.telegram.send_test()
+
+
+@router.post("/notifications/discord/test")
+async def send_test_discord_notification():
+    sim_state._notification_loop = asyncio.get_running_loop()
+    try:
+        return sim_state.notification_manager.discord.send_test(sim_state.get_adapted_state())
+    except RuntimeError:
+        raise HTTPException(status_code=409, detail="Discord test cooldown is active") from None
+
+
+@router.post("/notifications/incidents/{incident_id}/acknowledge")
+async def acknowledge_notification_incident(incident_id: str):
+    sim_state._notification_loop = asyncio.get_running_loop()
+    try:
+        return sim_state.notification_manager.acknowledge(incident_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Incident not found") from None
+    except ValueError:
+        raise HTTPException(status_code=409, detail="Incident is already resolved") from None
 
 
 @router.post("/notifications/gmail/connect")
