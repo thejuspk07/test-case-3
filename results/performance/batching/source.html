@@ -1885,9 +1885,8 @@ class ReservoirTwinRenderer {
     this.controls.update();
     this._adaptResolution(dt);
     const broadView=this.camera.position.distanceToSquared(this.controls.target)>950*950;
-    for(const batch of this.forestLODs.combined){batch.mesh.visible=broadView && batch.mesh.name!=='FOREST_TRUNKS';batch.mesh.geometry=batch.geometry;}
-    for(const patch of this.forestLODs.patches)patch.visible=!broadView &&
-      (patch.name!=='FOREST_TRUNKS_PATCH' || this.camera.position.distanceToSquared(patch.boundingSphere.center)<550*550);
+    for(const batch of this.forestLODs.combined){batch.mesh.visible=broadView;batch.mesh.geometry=batch.geometry;}
+    for(const patch of this.forestLODs.patches)patch.visible=!broadView;
     for(const lod of this.forestLODs || []) {
       const distance=this._qualityProfile?.lod || 680;
       const far=this.camera.position.distanceToSquared(lod.center)>distance*distance;
@@ -2124,7 +2123,7 @@ class ReservoirTwinRenderer {
     const treeTf = transforms(treePts, 1.3, 3.0);
     const trunkGeo = new THREE.CylinderGeometry(0.13, 0.24, 2.6, 7).translate(0, 1.3, 0);
     const canopyGeo = forestCrown(3.7);
-    instanced(trunkGeo, new THREE.MeshStandardMaterial({ color: 0x4e3a2a, roughness: 0.95 }), treeTf, null, false).name='FOREST_TRUNKS';
+    instanced(trunkGeo, new THREE.MeshStandardMaterial({ color: 0x4e3a2a, roughness: 0.95 }), treeTf, null, false);
     const canopy = instanced(canopyGeo, forestMaterial(),
       treeTf.filter((_,i)=>i%3 !== 0), [0.23, 0.12, 0.30, 0.13, 0.12], true);
     canopy.name = 'FOREST_CANOPY';

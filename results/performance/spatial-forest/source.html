@@ -539,7 +539,6 @@
   .flabel.selected{outline:2px solid var(--accent);box-shadow:0 0 0 5px rgba(70,145,126,.18)}
   .flabel .fl-risk{display:inline-block;font-size:8px;margin-left:15px}
   .flabel .fl-detail{display:block;width:100%;margin-left:15px;font-size:9px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
-  #visual-quality{font:10px var(--sans);color:var(--ink);background:var(--panel-solid);border:1px solid var(--hairline);border-radius:4px;padding:4px;max-width:112px}
   @media(max-width:1000px){.scene-view-switch{top:58px}.site-context{left:16px}}
 </style>
 </head>
@@ -1272,8 +1271,6 @@ class ReservoirTwinRenderer {
     this.resNames = ['Anayirankal', 'Ponmudi', 'Idamalayar', 'Idukki'];
 
     this._initCore();
-    this.visualQuality='BALANCED';
-    this._qualityClock=0;
     this._initTerrain();
     this._initVegetation();
     this._initDams();
@@ -1289,7 +1286,6 @@ class ReservoirTwinRenderer {
     for (const r of this.R) { r.levelCur = r.levelTgt; r.gateCur = r.gateTgt; }
 
     this._onResize = () => {
-      this._connectorDirty=true;
       const focus = this.container.classList.contains('scene-focus');
       const twinWide = focus || this.container.classList.contains('workspace-simulation');
       const drawer = this.container.classList.contains('reservoir-view');
@@ -1341,27 +1337,6 @@ class ReservoirTwinRenderer {
   }
 
   /* ================= public API ================= */
-  setVisualQuality(name) {
-    const profiles={ULTRA:{min:1.25,max:1.25,lod:1100,shadow:2048},HIGH:{min:.9,max:1,lod:850,shadow:2048},
-      BALANCED:{min:.8,max:1,lod:680,shadow:2048},PERFORMANCE:{min:.65,max:.85,lod:500,shadow:1024}};
-    if(!profiles[name])return;
-    this.visualQuality=name;this._qualityProfile=profiles[name];this._qualityClock=0;
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,profiles[name].max));
-    if(this.sun.shadow.mapSize.x!==profiles[name].shadow){
-      this.sun.shadow.mapSize.setScalar(profiles[name].shadow);
-      this.sun.shadow.map?.dispose();this.sun.shadow.map=null;this.renderer.shadowMap.needsUpdate=true;
-    }
-    try{localStorage.setItem('aquaflow-visual-quality',name);}catch(_){}
-  }
-  _adaptResolution(dt) {
-    this._qualityClock+=dt;
-    if(this._qualityClock<3 || !this._qualityProfile || !this._fps || document.hidden)return;
-    this._qualityClock=0;
-    const q=this._qualityProfile,max=Math.min(devicePixelRatio||1,q.max),min=Math.min(max,q.min);
-    const current=this.renderer.getPixelRatio();
-    const next=this._fps<50 ? Math.max(min,current-.1) : this._fps>59 ? Math.min(max,current+.025) : current;
-    if(Math.abs(next-current)>.015)this.renderer.setPixelRatio(next);
-  }
   updateState(state) {
     if (!state || this._disposed) return;
     const signature = JSON.stringify(state);
@@ -1883,19 +1858,12 @@ class ReservoirTwinRenderer {
     this._updateRain(visualDt);
     this._updateMist(visualDt);
     this.controls.update();
-    this._adaptResolution(dt);
-    const broadView=this.camera.position.distanceToSquared(this.controls.target)>950*950;
-    for(const batch of this.forestLODs.combined){batch.mesh.visible=broadView && batch.mesh.name!=='FOREST_TRUNKS';batch.mesh.geometry=batch.geometry;}
-    for(const patch of this.forestLODs.patches)patch.visible=!broadView &&
-      (patch.name!=='FOREST_TRUNKS_PATCH' || this.camera.position.distanceToSquared(patch.boundingSphere.center)<550*550);
     for(const lod of this.forestLODs || []) {
-      const distance=this._qualityProfile?.lod || 680;
-      const far=this.camera.position.distanceToSquared(lod.center)>distance*distance;
+      const far=this.camera.position.distanceToSquared(lod.center)>680*680;
       const geometry=far ? lod.far : lod.near;
       if(lod.mesh.geometry!==geometry)lod.mesh.geometry=geometry;
     }
-    this._connectorClock=(this._connectorClock||0)+dt;
-    if(this._connectorClock>=.066){this._connectorClock=0;this._updateConnectors();}
+    this._updateConnectors();
     this._updateHUD(dt);
     this.renderer.render(this.scene, this.camera);
     if (this.connectionStatus !== 'CONNECTED' && this.el) {
@@ -2124,7 +2092,7 @@ class ReservoirTwinRenderer {
     const treeTf = transforms(treePts, 1.3, 3.0);
     const trunkGeo = new THREE.CylinderGeometry(0.13, 0.24, 2.6, 7).translate(0, 1.3, 0);
     const canopyGeo = forestCrown(3.7);
-    instanced(trunkGeo, new THREE.MeshStandardMaterial({ color: 0x4e3a2a, roughness: 0.95 }), treeTf, null, false).name='FOREST_TRUNKS';
+    instanced(trunkGeo, new THREE.MeshStandardMaterial({ color: 0x4e3a2a, roughness: 0.95 }), treeTf, null, false);
     const canopy = instanced(canopyGeo, forestMaterial(),
       treeTf.filter((_,i)=>i%3 !== 0), [0.23, 0.12, 0.30, 0.13, 0.12], true);
     canopy.name = 'FOREST_CANOPY';
@@ -2518,15 +2486,13 @@ class ReservoirTwinRenderer {
     for (const r of this.R) {
       r.levelCur += (r.levelTgt - r.levelCur) * Math.min(1, dt * 0.8);
       const y = lerp(r.minY, r.full, r.levelCur);
-      if(Math.abs(r.waterMesh.position.y-y)>.001)this._connectorDirty=true;
       r.waterMesh.position.y = y;                 /* REAL surface movement, not a label */
       r.waterMat.uniforms.uTime.value = this._time;
       r.waterMat.uniforms.uLevelY.value = y;
       r.waterY = y;
     }
     for (const fm of this.flowMeshes) {
-      if (fm.receiver && fm.lastReceiverY!==fm.receiver.waterY) {
-        fm.lastReceiverY=fm.receiver.waterY;
+      if (fm.receiver) {
         const position = fm.mesh.geometry.attributes.position;
         const uv = fm.mesh.geometry.attributes.uv;
         const base = fm.basePositions;
@@ -2613,7 +2579,6 @@ class ReservoirTwinRenderer {
   }
 
   _updateRain(dt) {
-    if(this.rainGeo.drawRange.count===0)return;
     this.rain.position.x += (this.controls.target.x - this.rain.position.x) * Math.min(1, dt * 1.5);
     this.rain.position.z += (this.controls.target.z - this.rain.position.z) * Math.min(1, dt * 1.5);
     const p = this.rainGeo.attributes.position.array;
@@ -3151,13 +3116,6 @@ class ReservoirTwinRenderer {
       <div class="ctl-group">${rCards.map((_, i) => `<button class="cbtn" data-res="${i}">R${i + 1}</button>`).join('')}</div><div data-card></div>`;
     hud.appendChild(drawer);
     this.siteView = createSiteView(this.container, i=>this.resNames[i], i=>this.setCameraPreset('reservoir'+(i+1)));
-    const quality=document.createElement('select');quality.id='visual-quality';quality.setAttribute('aria-label','Visual quality');
-    for(const name of ['ULTRA','HIGH','BALANCED','PERFORMANCE']){const option=document.createElement('option');option.value=name;option.textContent=name;quality.append(option);}
-    let initialQuality='BALANCED';try{initialQuality=localStorage.getItem('aquaflow-visual-quality')||'BALANCED';}catch(_){}
-    if(!['ULTRA','HIGH','BALANCED','PERFORMANCE'].includes(initialQuality))initialQuality='BALANCED';
-    quality.value=initialQuality;this.setVisualQuality(initialQuality);
-    quality.addEventListener('change',()=>this.setVisualQuality(quality.value));
-    this.container.querySelector('.scene-view-switch').append(quality);
     const restoreCards = () => rCards.forEach(card => bottom.appendChild(card));
     const closeDrawer = () => {
       restoreCards();
@@ -3452,9 +3410,6 @@ class ReservoirTwinRenderer {
 
   _updateConnectors() {
     if (!this.connLines || !this.panelAnchors) return;
-    this._connectorCamera ||= new THREE.Matrix4();
-    if(!this._connectorDirty && this._connectorVersion===this._labelVersion && this._connectorCamera.equals(this.camera.matrixWorld))return;
-    this._connectorDirty=false;this._connectorVersion=this._labelVersion;this._connectorCamera.copy(this.camera.matrixWorld);
     const w = this.renderer.domElement.clientWidth, h = this.renderer.domElement.clientHeight;
     const viewport = this.renderer.domElement.getBoundingClientRect();
     /* floating label anchor points: R1/R2/R3 above their basins, DS at the downstream pool */
@@ -3913,11 +3868,6 @@ if (app) {
     camera: app.camera.position.toArray(), target: app.controls.target.toArray(),
     memory: {...app.renderer.info.memory}, drawCalls: app.renderer.info.render.calls,
     triangles: app.renderer.info.render.triangles,
-    rendering:{quality:app.visualQuality,pixelRatio:app.renderer.getPixelRatio(),devicePixelRatio:window.devicePixelRatio,
-      canvas:[app.renderer.domElement.width,app.renderer.domElement.height],
-      shadowMaps:1,shadowSize:app.sun.shadow.mapSize.toArray(),shadowAutoUpdate:app.renderer.shadowMap.autoUpdate,
-      requestedGpuMode:app.renderer.getContext().getContextAttributes().powerPreference,
-      webgl:app.renderer.getContext().getParameter(app.renderer.getContext().VERSION)},
     reservoirs: app.R.map(r => ({id:r.B.id, level:r.data.level, gate:r.data.gate,
       waterY:r.waterMesh.position.y, gateY:r.gateMesh.position.y,
       gateTargetY:r.gateClosedY + r.gateTgt * r.gateTravel,
