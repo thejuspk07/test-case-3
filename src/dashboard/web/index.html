@@ -748,6 +748,10 @@ function fbm(x, y, oct = 5) {
 const VALLEY_Z0 = -450, VALLEY_Z1 = 450;
 const valleyFloor = z => 150 - ((z - VALLEY_Z0) / (VALLEY_Z1 - VALLEY_Z0)) * 170;
 const valleyCenterX = z => 70 * Math.sin(z * 0.0045) + 25 * Math.sin(z * 0.011 + 1.7);
+const DOWNSTREAM_HOUSE_SITES = Object.freeze([
+  { side: -1, z: 565 }, { side: 1, z: 590 },
+  { side: -1, z: 675 }, { side: 1, z: 700 },
+]);
 
 const BASINS = [
   // Scene units, NOT surveyed dimensions or capacity-derived surface areas.
@@ -1288,6 +1292,7 @@ class ReservoirTwinRenderer {
     this._qualityClock=0;
     this._initTerrain();
     this._initVegetation();
+    this._initSettlement();
     this._initDams();
     this.applyTheme3D(ThemeManager.current || 'light');
     this._initWater();
@@ -1928,6 +1933,7 @@ class ReservoirTwinRenderer {
 
     if (this.onTick) this.onTick(dt);        /* test driver / future Python bridge */
     this._updateCameraTween(dt);
+    this._updateSettlement(dt);
     this._updateStorm(visualDt);
     this._updateWater(visualDt);
     this._updateGatesAndJets(visualDt);
@@ -2114,12 +2120,16 @@ class ReservoirTwinRenderer {
   _initVegetation() {
     const group = new THREE.Group();
     group.name = 'VEGETATION';
+    const housePads = DOWNSTREAM_HOUSE_SITES.map(site => ({
+      x: valleyCenterX(site.z) + site.side * 145, z: site.z,
+    }));
 
     const scatter = (count, cfg) => {
       const pts = []; let tries = 0;
       while (pts.length < count && tries < count * 40) {
         tries++;
         const x = (rng() * 2 - 1) * 780, z = (rng() * 2 - 1) * 780;
+        if (housePads.some(p => (x-p.x)*(x-p.x) + (z-p.z)*(z-p.z) < 28*28)) continue;
         const h = terrainHeight(x, z);
         if (h > cfg.maxH) continue;
         if (terrainSlope(x, z, h) > cfg.maxSlope) continue;
@@ -2203,6 +2213,105 @@ class ReservoirTwinRenderer {
 
     this.forestLODs=partitionForest(group,this.forestLODs);
     this.scene.add(group);
+  }
+
+  /* ================= downstream village (presentation only) ================= */
+  _initSettlement() {
+    const houseBody = new THREE.BoxGeometry(15, 8, 13);
+    const roofGeo = new THREE.ConeGeometry(10.8, 7, 4);
+    roofGeo.rotateY(Math.PI / 4);
+    const foundationGeo = new THREE.BoxGeometry(16.5, 1.1, 14.5);
+    const porchGeo = new THREE.BoxGeometry(5.5, 0.55, 3.2);
+    const windowGeo = new THREE.BoxGeometry(2.1, 2.2, 0.24);
+    const houseMats = [0xd4c1a1, 0xc5d2c8, 0xd9b98f, 0xb9c9c4].map(color =>
+      new THREE.MeshStandardMaterial({ color, roughness: 0.92 }));
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x55473c, roughness: 0.94 });
+    const foundationMat = new THREE.MeshStandardMaterial({ color: 0x77766c, roughness: 1 });
+    const windowMat = new THREE.MeshStandardMaterial({ color: 0x354c4b, roughness: 0.48, metalness: 0.08 });
+    const porchMat = new THREE.MeshStandardMaterial({ color: 0x9a866a, roughness: 1 });
+    this.downstreamSettlement = new THREE.Group();
+    this.downstreamSettlement.name = 'DOWNSTREAM_RIVERSIDE_SETTLEMENT_PRESENTATION';
+    DOWNSTREAM_HOUSE_SITES.forEach((site, index) => {
+      const x = valleyCenterX(site.z) + site.side * 145;
+      const y = terrainSurfaceHeight(x, site.z);
+      const home = new THREE.Group();
+      home.position.set(x, y, site.z);
+      home.rotation.y = site.side > 0 ? -Math.PI / 2 : Math.PI / 2;
+      const place = (geometry, material, px, py, pz) => {
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(px, py, pz);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        home.add(mesh);
+        return mesh;
+      };
+      place(foundationGeo, foundationMat, 0, 0.55, 0);
+      place(houseBody, houseMats[index], 0, 5, 0);
+      place(roofGeo, roofMat, 0, 11.8, 0);
+      place(porchGeo, porchMat, 0, 1.15, 8.2);
+      place(windowGeo, windowMat, -4, 5.1, 6.62);
+      place(windowGeo, windowMat, 4, 5.1, 6.62);
+      home.userData.presentationOnly = true;
+      this.downstreamSettlement.add(home);
+    });
+    this.scene.add(this.downstreamSettlement);
+
+    const torsoGeo = new THREE.CapsuleGeometry(0.58, 1.45, 2, 6);
+    const headGeo = new THREE.SphereGeometry(0.48, 8, 6);
+    const limbGeo = new THREE.CapsuleGeometry(0.25, 1.05, 2, 5);
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xb9825f, roughness: 0.94 });
+    const trouserMat = new THREE.MeshStandardMaterial({ color: 0x354044, roughness: 0.96 });
+    const shirtMats = [0x3b8d79, 0xc17648, 0x617fa0, 0xc1a64c].map(color =>
+      new THREE.MeshStandardMaterial({ color, roughness: 0.93 }));
+    this.downstreamWalkers = [];
+    for (let i = 0; i < 4; i++) {
+      const side = i % 2 ? 1 : -1;
+      const group = new THREE.Group();
+      group.name = `DOWNSTREAM_WALKER_${i + 1}_PRESENTATION`;
+      group.userData.presentationOnly = true;
+      const addPart = (parent, geometry, material, x, y, z) => {
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(x, y, z);
+        mesh.castShadow = true;
+        parent.add(mesh);
+        return mesh;
+      };
+      addPart(group, torsoGeo, shirtMats[i], 0, 1.95, 0);
+      addPart(group, headGeo, skinMat, 0, 3.55, 0);
+      const arms = [], legs = [];
+      for (const sign of [-1, 1]) {
+        const arm = new THREE.Group();
+        arm.position.set(sign * 0.72, 2.55, 0);
+        addPart(arm, limbGeo, skinMat, 0, -0.48, 0);
+        group.add(arm);
+        arms.push(arm);
+        const leg = new THREE.Group();
+        leg.position.set(sign * 0.34, 1.25, 0);
+        addPart(leg, limbGeo, trouserMat, 0, -0.47, 0);
+        group.add(leg);
+        legs.push(leg);
+      }
+      this.downstreamSettlement.add(group);
+      this.downstreamWalkers.push({ group, arms, legs, side, phase: i * 1.55, speed: 0.48 + (i % 2) * 0.08 });
+    }
+  }
+
+  _updateSettlement(dt) {
+    if (!this.downstreamWalkers) return;
+    for (const walker of this.downstreamWalkers) {
+      walker.phase += dt * walker.speed;
+      const z = 630 + Math.sin(walker.phase) * 38;
+      const x = valleyCenterX(z) + walker.side * (103 + Math.cos(walker.phase) * 9);
+      const nextZ = 630 + Math.sin(walker.phase + 0.02) * 38;
+      const nextX = valleyCenterX(nextZ) + walker.side * (103 + Math.cos(walker.phase + 0.02) * 9);
+      const stride = Math.sin(walker.phase * 5);
+      walker.group.position.set(x, terrainSurfaceHeight(x, z) + 0.08, z);
+      walker.group.rotation.y = Math.atan2(nextX - x, nextZ - z);
+      walker.legs[0].rotation.x = stride * 0.42;
+      walker.legs[1].rotation.x = -stride * 0.42;
+      walker.arms[0].rotation.x = -stride * 0.34;
+      walker.arms[1].rotation.x = stride * 0.34;
+    }
   }
 
   /* ================= dams, gates, spillways ================= */
