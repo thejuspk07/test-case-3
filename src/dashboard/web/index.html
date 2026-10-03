@@ -332,6 +332,9 @@
   .sim-camera-controls .k{font-size:8px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-faint);margin-right:4px}
   .sim-camera-controls [data-camera]{pointer-events:auto}
   .simulation-view [data-camera]{pointer-events:auto}
+  .classroom-panel{pointer-events:auto;background:var(--panel-solid);border:1px solid var(--hairline);border-radius:8px;padding:10px;margin-top:8px;max-width:690px;max-height:290px;overflow:auto;font-size:11px}
+  .classroom-panel table{width:100%;font-size:10px;text-align:right}.classroom-panel td,.classroom-panel th{padding:4px}.classroom-panel td:first-child{text-align:left}
+  .classroom-panel p{margin:8px 0;line-height:1.5}
   #twin-root.workspace-open #hud-right,#twin-root.workspace-open #hud-bottom,#twin-root.workspace-open #hud-hint,#twin-root.workspace-open #operator-alert,#twin-root.workspace-open #demo-badge{display:none!important}
   #twin-root.workspace-open:not(.workspace-simulation) #hud-controls{display:none!important}
   #twin-root.workspace-simulation #hud-controls{z-index:34}
@@ -1182,7 +1185,10 @@ function jitterGeometry(geo, amp, yScale, yLift, seed) {
 
 /* ---------------- camera presets ---------------- */
 const PRESETS = {
-  overview:   { p: [-820, 990, 360], t: [0, 25, 20] },
+  overview:   { p: [-820, 1550, 360], t: [0, 25, 20] },
+  aerial:     { p: [90, 1080, 35], t: [0, 15, 25] },
+  camera1:    { p: [-980, 1400, 780], t: [0, 20, 15] },
+  camera2:    { p: [980, 1400, -780], t: [0, 20, 15] },
   reservoir1: { p: [-270, 330, -120], t: [-70, 115, -365] },
   reservoir2: { p: [-310, 320, 100], t: [-65, 70, -160] },
   reservoir3: { p: [-350, 330, 375], t: [40, 25, 85] },
@@ -3053,6 +3059,9 @@ class ReservoirTwinRenderer {
     bar.innerHTML = `
       <div class="ctl-group"><span class="ctl-cap">CAMERA</span>
         <button class="cbtn on" data-cam="overview">OVERVIEW</button>
+        <button class="cbtn" data-cam="aerial">AERIAL</button>
+        <button class="cbtn" data-cam="camera1">C1</button>
+        <button class="cbtn" data-cam="camera2">C2</button>
         <button class="cbtn" data-cam="reservoir1">A</button>
         <button class="cbtn" data-cam="reservoir2">B</button>
         <button class="cbtn" data-cam="reservoir3">C</button>
@@ -3509,7 +3518,10 @@ class ReservoirTwinRenderer {
         workspaceView.innerHTML=`<div class="workspace-inner">${heading('Operations / Forecasting','FORECASTING','Forecast provenance, horizon values, and controller eligibility from current state.')}<div class="page-grid"><section class="page-card third"><h2>Forecast source</h2><div class="metric-grid">${metric('Selected source',fs.selected)}${metric('Model',fp.model)}${metric('Forecast status',(state.forecast_summary || {}).status)}</div><p style="margin-top:12px">${esc(replayNote)}</p></section><section class="page-card third"><h2>Control eligibility</h2><div class="metric-grid">${metric('Forecast eligible',eligible===true?'ELIGIBLE':eligible===false?'NOT ELIGIBLE':'Not available')}${metric('AUTO forecast gate',(state.auto_control || {}).forecast_control_eligible===true?'ELIGIBLE':(state.auto_control || {}).forecast_control_eligible===false?'NOT ELIGIBLE':'Not available')}</div><p style="margin-top:12px">Eligibility is displayed directly from the authoritative forecast selection and control state.</p></section><section class="page-card third"><h2>Provenance</h2><p>${esc(fp.live_path)}</p><p style="margin-top:8px">${esc(fp.provenance_note)}</p></section><section class="page-card wide"><h2>Reservoir forecast horizons <span class="page-note">${esc(fp.forecast_unit || '')}</span></h2><div style="overflow:auto"><table class="data-table"><thead><tr><th>Reservoir</th><th>Status</th><th>1 day</th><th>3 days</th><th>7 days</th><th>Source</th><th>Provenance</th></tr></thead><tbody>${forecastRows || '<tr><td colspan="7">Awaiting authoritative forecast state.</td></tr>'}</tbody></table></div></section></div></div>`;
       } else if (page === 'simulation') {
         const sim=state.simulation || {}, fs=state.forecast_source_selection || {};
-        workspaceView.innerHTML=`<div class="workspace-inner">${heading('Operations / Digital twin','SIMULATION','Live Three.js reservoir network. Simulation controls remain available below.') }<div class="simulation-strip">${metric('Simulation state',sim.running===true?'RUNNING':sim.running===false?'PAUSED':'Not available')}${metric('Controller',state.controller_mode)}${metric('Forecast source',fs.selected)}${metric('State ID',(state.state_identity || {}).state_id)}${metric('Simulation clock',state.simulation_time)}</div><div class="sim-camera-controls"><span class="k">CAMERA PRESETS</span><button class="page-action" data-camera="overview">OVERVIEW</button>${[1,2,3,4].map(n=>`<button class="page-action" data-camera="reservoir${n}">R${n}</button>`).join('')}<button class="page-action" data-camera="downstream">DOWNSTREAM</button></div></div>`;
+        const demo=state.classroom_demo || {}, boundary=state.final_safety || {};
+        const demoRows=(demo.reservoirs || []).map(r=>`<tr><td>${esc(r.node.replace('Virtual Reservoir ','R'))}</td><td>${val(r.storage,3)}</td><td>${val(r.local_inflow,2)}</td><td>${val(r.routed_inflow,2)}</td><td>${val(r.controlled_release,2)}</td><td>${val(r.spill,2)}</td><td>${val(r.gate_pct,1)}%</td></tr>`).join('');
+        const demoPanel=`<section class="classroom-panel" data-classroom-panel><button class="page-action" data-classroom-load>LOAD CLASSROOM DEMO</button> <span>Backend day ${esc(demo.day)} &middot; ${esc(demo.units)}</span>${demo.active?`<p>1. STEP with gates closed. 2. Set A to 50%, then STEP. 3. STEP twice more: A's release arrives at B after 2 days. 4. Select VALIDATED REPLAY and AUTO, then STEP to run MPC on historical forecast inputs.</p><table><thead><tr><th>Node</th><th>Storage</th><th>Local in</th><th>Routed in</th><th>Release</th><th>Spill</th><th>Gate</th></tr></thead><tbody>${demoRows}</tbody></table><p>${(demo.routes || []).map(r=>`${esc(r.source.slice(-1))} &rarr; ${esc(r.destination.slice(-1))}: ${esc(r.delay_days)} days, &times;${esc(r.attenuation)}, queued ${val(r.queued_mcm,2)} MCM`).join(' &middot; ')}</p><p>Final safety: ${esc(boundary.gate_status || 'not stepped')} &middot; Downstream: ${esc(boundary.downstream?.status || 'not checked')}. ${esc(boundary.downstream?.reason || '')}</p><p>${esc(demo.spill_policy)} Forecast replay is a historical what-if scenario, not a forecast of these synthetic inflows.</p>`:''}</section>`;
+        workspaceView.innerHTML=`<div class="workspace-inner">${heading('Operations / Digital twin','SIMULATION','Live Three.js reservoir network. Simulation controls remain available below.') }<div class="simulation-strip">${metric('Simulation state',sim.running===true?'RUNNING':sim.running===false?'PAUSED':'Not available')}${metric('Controller',state.controller_mode)}${metric('Forecast source',fs.selected)}${metric('State ID',(state.state_identity || {}).state_id)}${metric('Simulation clock',state.simulation_time)}</div><div class="sim-camera-controls"><span class="k">CAMERA PRESETS</span><button class="page-action" data-camera="overview">OVERVIEW</button>${[1,2,3,4].map(n=>`<button class="page-action" data-camera="reservoir${n}">R${n}</button>`).join('')}<button class="page-action" data-camera="downstream">DOWNSTREAM</button></div>${demoPanel}</div>`;
       } else if (page === 'risk') {
         const entries=Object.keys(rs).filter(key=>/^reservoir_\d+$/.test(key));
         const counts={'NORMAL':0,'WATCH':0,'HIGH RISK':0,'CRITICAL':0};
@@ -4064,7 +4076,8 @@ if (app) {
     rendering:{quality:app.visualQuality,pixelRatio:app.renderer.getPixelRatio(),devicePixelRatio:window.devicePixelRatio,
       canvas:[app.renderer.domElement.width,app.renderer.domElement.height],
       shadowMaps:1,shadowSize:app.sun.shadow.mapSize.toArray(),shadowAutoUpdate:app.renderer.shadowMap.autoUpdate,
-      requestedGpuMode:app.renderer.getContext().getContextAttributes().powerPreference,
+      contextLost:app.renderer.getContext().isContextLost(),
+      requestedGpuMode:app.renderer.getContext().getContextAttributes()?.powerPreference ?? null,
       webgl:app.renderer.getContext().getParameter(app.renderer.getContext().VERSION)},
     reservoirs: app.R.map(r => ({id:r.B.id, level:r.data.level, gate:r.data.gate,
       waterY:r.waterMesh.position.y, gateY:r.gateMesh.position.y,
@@ -4110,6 +4123,9 @@ if (app) {
     } else if (step === 'rain') await api.setStorm(35);
     else await api.setMode('AI');
   }));
+  document.addEventListener('click', event => {
+    if (event.target.closest('[data-classroom-load]')) api.classroomDemo();
+  });
   bindClick('#btn-play', () => api.play());
   bindClick('#btn-pause', () => api.pause());
   bindClick('#btn-step', () => api.step());
