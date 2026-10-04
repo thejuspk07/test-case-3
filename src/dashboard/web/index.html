@@ -2223,37 +2223,44 @@ class ReservoirTwinRenderer {
     const foundationGeo = new THREE.BoxGeometry(16.5, 1.1, 14.5);
     const porchGeo = new THREE.BoxGeometry(5.5, 0.55, 3.2);
     const windowGeo = new THREE.BoxGeometry(2.1, 2.2, 0.24);
-    const houseMats = [0xd4c1a1, 0xc5d2c8, 0xd9b98f, 0xb9c9c4].map(color =>
-      new THREE.MeshStandardMaterial({ color, roughness: 0.92 }));
     const roofMat = new THREE.MeshStandardMaterial({ color: 0x55473c, roughness: 0.94 });
     const foundationMat = new THREE.MeshStandardMaterial({ color: 0x77766c, roughness: 1 });
     const windowMat = new THREE.MeshStandardMaterial({ color: 0x354c4b, roughness: 0.48, metalness: 0.08 });
     const porchMat = new THREE.MeshStandardMaterial({ color: 0x9a866a, roughness: 1 });
     this.downstreamSettlement = new THREE.Group();
     this.downstreamSettlement.name = 'DOWNSTREAM_RIVERSIDE_SETTLEMENT_PRESENTATION';
-    DOWNSTREAM_HOUSE_SITES.forEach((site, index) => {
+    this.downstreamSettlement.userData.presentationOnly = true;
+    const sites = DOWNSTREAM_HOUSE_SITES.map(site => {
       const x = valleyCenterX(site.z) + site.side * 145;
       const y = terrainSurfaceHeight(x, site.z);
-      const home = new THREE.Group();
-      home.position.set(x, y, site.z);
-      home.rotation.y = site.side > 0 ? -Math.PI / 2 : Math.PI / 2;
-      const place = (geometry, material, px, py, pz) => {
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(px, py, pz);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        home.add(mesh);
-        return mesh;
-      };
-      place(foundationGeo, foundationMat, 0, 0.55, 0);
-      place(houseBody, houseMats[index], 0, 5, 0);
-      place(roofGeo, roofMat, 0, 11.8, 0);
-      place(porchGeo, porchMat, 0, 1.15, 8.2);
-      place(windowGeo, windowMat, -4, 5.1, 6.62);
-      place(windowGeo, windowMat, 4, 5.1, 6.62);
-      home.userData.presentationOnly = true;
-      this.downstreamSettlement.add(home);
+      return { x, y, z: site.z, yaw: site.side > 0 ? -Math.PI / 2 : Math.PI / 2 };
     });
+    const placeBatch = (name, geometry, material, placements, colors = null) => {
+      const mesh = new THREE.InstancedMesh(geometry, material, placements.length);
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+      const transform = new THREE.Object3D();
+      placements.forEach((part, i) => {
+        transform.position.set(part.site.x, part.site.y, part.site.z);
+        transform.rotation.set(0, part.site.yaw, 0);
+        transform.position.add(new THREE.Vector3(...part.offset).applyAxisAngle(new THREE.Vector3(0, 1, 0), part.site.yaw));
+        transform.updateMatrix();
+        mesh.setMatrixAt(i, transform.matrix);
+        if (colors) mesh.setColorAt(i, new THREE.Color(colors[part.siteIndex]));
+      });
+      this.downstreamSettlement.add(mesh);
+    };
+    const oneEach = offset => sites.map((site, siteIndex) => ({ site, siteIndex, offset }));
+    placeBatch('DOWNSTREAM_HOUSES_FOUNDATIONS', foundationGeo, foundationMat, oneEach([0, 0.55, 0]));
+    placeBatch('DOWNSTREAM_HOUSES_WALLS', houseBody,
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.92 }), oneEach([0, 5, 0]),
+      [0xd4c1a1, 0xc5d2c8, 0xd9b98f, 0xb9c9c4]);
+    placeBatch('DOWNSTREAM_HOUSES_ROOFS', roofGeo, roofMat, oneEach([0, 11.8, 0]));
+    placeBatch('DOWNSTREAM_HOUSES_PORCHES', porchGeo, porchMat, oneEach([0, 1.15, 8.2]));
+    placeBatch('DOWNSTREAM_HOUSES_WINDOWS', windowGeo, windowMat,
+      sites.flatMap((site, siteIndex) => [-4, 4].map(x => ({ site, siteIndex, offset: [x, 5.1, 6.62] }))));
     this.scene.add(this.downstreamSettlement);
 
     const torsoGeo = new THREE.CapsuleGeometry(0.58, 1.45, 2, 6);
@@ -2261,22 +2268,39 @@ class ReservoirTwinRenderer {
     const limbGeo = new THREE.CapsuleGeometry(0.25, 1.05, 2, 5);
     const skinMat = new THREE.MeshStandardMaterial({ color: 0xb9825f, roughness: 0.94 });
     const trouserMat = new THREE.MeshStandardMaterial({ color: 0x354044, roughness: 0.96 });
-    const shirtMats = [0x3b8d79, 0xc17648, 0x617fa0, 0xc1a64c].map(color =>
-      new THREE.MeshStandardMaterial({ color, roughness: 0.93 }));
+    const addWalkerInstances = (name, geometry, material, count = 4) => {
+      const mesh = new THREE.InstancedMesh(geometry, material, count);
+      mesh.name = name;
+      mesh.castShadow = false;
+      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      this.downstreamSettlement.add(mesh);
+      return mesh;
+    };
+    this.downstreamWalkerMeshes = {
+      torso: addWalkerInstances('DOWNSTREAM_WALKERS_TORSOS', torsoGeo,
+        new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.93 })),
+      head: addWalkerInstances('DOWNSTREAM_WALKERS_HEADS', headGeo, skinMat),
+      arm: addWalkerInstances('DOWNSTREAM_WALKERS_ARMS', limbGeo, skinMat, 8),
+      leg: addWalkerInstances('DOWNSTREAM_WALKERS_LEGS', limbGeo, trouserMat, 8),
+    };
+    const shirtColors = [0x3b8d79, 0xc17648, 0x617fa0, 0xc1a64c];
+    const shirtColor = new THREE.Color();
+    shirtColors.forEach((color, i) => {
+      shirtColor.setHex(color, THREE.SRGBColorSpace);
+      this.downstreamWalkerMeshes.torso.setColorAt(i, shirtColor);
+    });
     this.downstreamWalkers = [];
     for (let i = 0; i < 4; i++) {
       const side = i % 2 ? 1 : -1;
       const group = new THREE.Group();
       group.name = `DOWNSTREAM_WALKER_${i + 1}_PRESENTATION`;
-      group.userData.presentationOnly = true;
       const addPart = (parent, geometry, material, x, y, z) => {
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(x, y, z);
-        mesh.castShadow = true;
         parent.add(mesh);
         return mesh;
       };
-      addPart(group, torsoGeo, shirtMats[i], 0, 1.95, 0);
+      addPart(group, torsoGeo, this.downstreamWalkerMeshes.torso.material, 0, 1.95, 0);
       addPart(group, headGeo, skinMat, 0, 3.55, 0);
       const arms = [], legs = [];
       for (const sign of [-1, 1]) {
@@ -2291,14 +2315,15 @@ class ReservoirTwinRenderer {
         group.add(leg);
         legs.push(leg);
       }
-      this.downstreamSettlement.add(group);
       this.downstreamWalkers.push({ group, arms, legs, side, phase: i * 1.55, speed: 0.48 + (i % 2) * 0.08 });
     }
+    this._updateSettlement(0);
   }
 
   _updateSettlement(dt) {
     if (!this.downstreamWalkers) return;
-    for (const walker of this.downstreamWalkers) {
+    for (let index = 0; index < this.downstreamWalkers.length; index++) {
+      const walker = this.downstreamWalkers[index];
       walker.phase += dt * walker.speed;
       const z = 630 + Math.sin(walker.phase) * 38;
       const x = valleyCenterX(z) + walker.side * (103 + Math.cos(walker.phase) * 9);
@@ -2311,6 +2336,18 @@ class ReservoirTwinRenderer {
       walker.legs[1].rotation.x = -stride * 0.42;
       walker.arms[0].rotation.x = -stride * 0.34;
       walker.arms[1].rotation.x = stride * 0.34;
+      walker.group.updateMatrixWorld(true);
+      const meshes = this.downstreamWalkerMeshes;
+      meshes.torso.setMatrixAt(index, walker.group.children[0].matrixWorld);
+      meshes.head.setMatrixAt(index, walker.group.children[1].matrixWorld);
+      meshes.arm.setMatrixAt(index * 2, walker.arms[0].children[0].matrixWorld);
+      meshes.arm.setMatrixAt(index * 2 + 1, walker.arms[1].children[0].matrixWorld);
+      meshes.leg.setMatrixAt(index * 2, walker.legs[0].children[0].matrixWorld);
+      meshes.leg.setMatrixAt(index * 2 + 1, walker.legs[1].children[0].matrixWorld);
+    }
+    for (const mesh of Object.values(this.downstreamWalkerMeshes)) {
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingSphere();
     }
   }
 
@@ -4180,6 +4217,9 @@ if (app) {
     fps: app._fps, frameMs: app._fps ? 1000 / app._fps : null,
     connection: app.connectionStatus, stateId: app.data.stateId,
     camera: app.camera.position.toArray(), target: app.controls.target.toArray(),
+    settlement: { houses: DOWNSTREAM_HOUSE_SITES.length,
+      walkers: app.downstreamWalkers.map(w => w.group.position.toArray()),
+      instances: Object.fromEntries(Object.entries(app.downstreamWalkerMeshes).map(([key, mesh]) => [key, mesh.count])) },
     memory: {...app.renderer.info.memory}, drawCalls: app.renderer.info.render.calls,
     triangles: app.renderer.info.render.triangles,
     rendering:{quality:app.visualQuality,pixelRatio:app.renderer.getPixelRatio(),devicePixelRatio:window.devicePixelRatio,
