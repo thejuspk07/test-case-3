@@ -30,6 +30,9 @@ def test_notification_settings_browser_e2e(monkeypatch, tmp_path):
     manager = notifications.DownstreamNotificationManager(transport=lambda *args: emails.append(args),
                                                           on_update=sim_state._schedule_notification_broadcast)
     manager.discord = discord.DiscordAdapter(transport=httpx.MockTransport(provider), on_update=manager._changed)
+    # The headless browser can take several minutes on software-rendered CI;
+    # keep the E2E's expected send count independent of that wall-clock delay.
+    manager.discord.repeat_seconds = 3600
     snapshot = deepcopy(sim_state.get_adapted_state())
     snapshot["downstream"].update(status="WARNING", flow_m3_s=80, capacity_m3_s=90)
     snapshot["control"].update(downstream_proposed_predicted_flow_mcm_day=55, downstream_capacity_mcm_day=50)
@@ -105,7 +108,10 @@ def test_notification_settings_browser_e2e(monkeypatch, tmp_path):
                 with manager.discord._lock:
                     manager.discord._current["_last_attempt"] -= manager.discord.cooldown_seconds
                 manager.observe(snapshot)
-                playwright_api.expect(page.locator("[data-active-incidents]")).to_have_text("No active downstream incidents.", timeout=15000)
+                # Browser rendering can be slow during the full model/browser
+                # suite. The authoritative incident closes synchronously here;
+                # allow the scheduled websocket refresh to reach the page.
+                playwright_api.expect(page.locator("[data-active-incidents]")).to_have_text("No active downstream incidents.", timeout=45000)
                 assert len(sent) == 3 and len(emails) == 1
                 assert b"attachment://chart.png" in sent[-1].content
                 assert b"filename=\"chart.png\"" in sent[-1].content

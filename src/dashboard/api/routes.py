@@ -265,8 +265,17 @@ async def step_simulation():
     await sim_state.broadcast_state()
     return {"status": "success", "stepped": True}
 
+@router.post("/simulation/classroom-demo")
+async def classroom_demo():
+    sim_state.load_classroom_demo()
+    sim_state.close_resolved_notification_after_reset()
+    await sim_state.broadcast_state()
+    return {"status": "success", "preset": "classroom", "running": False}
+
+
 @router.post("/simulation/reset")
 async def reset_simulation():
+    sim_state.classroom_demo = False
     sim_state.bridge.init_cascade(50.0)
     # STAGE 18 — a reset begins a NEW run, so the previous run's controller
     # decision, gate transitions, risk memory and event log are cleared. This is
